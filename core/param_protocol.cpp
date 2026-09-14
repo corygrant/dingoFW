@@ -46,6 +46,45 @@ void EncodeParamRsp(CANTxFrame *tx, uint8_t cmd, uint16_t index, uint8_t subinde
 
 #define TX_MAX_RETRIES 50   // 50 × 200µs = 10ms max stall per frame before aborting
 
+// Retry a TX post against a momentarily-full mailbox instead of dropping it.
+// Used for every param-protocol response so a busy bus doesn't silently
+// swallow a reply and force the host to wait out its full timeout.
+msg_t PostTxFrameWithRetry(CANTxFrame *tx) {
+    msg_t ret;
+    uint8_t txRetries = 0;
+    do {
+        ret = PostTxFrame(tx);
+        if (ret != MSG_OK) {
+            chThdSleepMicroseconds(200);
+            txRetries++;
+        }
+    } while (ret != MSG_OK && txRetries < TX_MAX_RETRIES);
+    return ret;
+}
+
+// Set while a ReadAll/WriteAll bulk transfer is in progress so cyclic TX can pause.
+volatile bool g_bParamOpInProgress = false;
+static volatile uint32_t nParamOpStartTime = 0;
+#define PARAM_OP_MAX_DURATION_MS 2000 // safety valve: never pause cyclic TX longer than this
+
+static void SetParamOpInProgress(bool bInProgress) {
+    g_bParamOpInProgress = bInProgress;
+    if (bInProgress)
+        nParamOpStartTime = SYS_TIME;
+}
+
+bool IsCyclicTxPaused() {
+    if (!g_bParamOpInProgress)
+        return false;
+
+    if (SYS_TIME - nParamOpStartTime > PARAM_OP_MAX_DURATION_MS) {
+        g_bParamOpInProgress = false; // stale op (e.g. host abandoned a WriteAll mid-stream)
+        return false;
+    }
+
+    return true;
+}
+
 void SendAllParams(bool modifiedOnly) {
     CANTxFrame tx;
     uint8_t nBatchCount = 0;
@@ -64,17 +103,8 @@ void SendAllParams(bool modifiedOnly) {
         uint32_t value = ReadParam(&stParams[i]);
         EncodeParamRsp(&tx, static_cast<uint8_t>(MsgCmd::ReadAllRsp),
                         stParams[i].nIndex, stParams[i].nSubIndex, value);
-        msg_t ret;
-        uint8_t txRetries = 0;
-        do {
-            ret = PostTxFrame(&tx);
-            if (ret != MSG_OK) {
-                chThdSleepMicroseconds(200);
-                txRetries++;
-            }
-        } while (ret != MSG_OK && txRetries < TX_MAX_RETRIES);
 
-        if (ret != MSG_OK)
+        if (PostTxFrameWithRetry(&tx) != MSG_OK)
             break; // TX stalled — abort; ReadAllComplete sent below with wrong CRC so host retries
 
         nReadCrc = CalculateCRC32Partial(&tx.data8[4], 4, nReadCrc);
@@ -85,7 +115,7 @@ void SendAllParams(bool modifiedOnly) {
     chThdSleepMilliseconds(1);
     nReadCrc = ~nReadCrc; // Finalize CRC after all params sent
     EncodeParamRsp(&tx, static_cast<uint8_t>(MsgCmd::ReadAllComplete), nNumReadParams, 0, nReadCrc); // End of params marker, return number of params sent and CRC
-    PostTxFrame(&tx);
+    PostTxFrameWithRetry(&tx);
 }
 
 void CheckCrc() {
@@ -94,14 +124,14 @@ void CheckCrc() {
     nCheckCrc = 0xFFFFFFFF; // Reset CRC for new batch
     for (int i = 0; i < NUM_PARAMS; i++) {
         uint32_t value = ReadParam(&stParams[i]);
-        EncodeParamRsp(&tx, static_cast<uint8_t>(MsgCmd::ReadAllRsp), 
+        EncodeParamRsp(&tx, static_cast<uint8_t>(MsgCmd::ReadAllRsp),
                         stParams[i].nIndex, stParams[i].nSubIndex, value);
         nCheckCrc = CalculateCRC32Partial(&tx.data8[4], 4, nCheckCrc);
     }
     nCheckCrc = ~nCheckCrc; // Finalize CRC after all params sent
-    
+
     EncodeParamRsp(&tx, static_cast<uint8_t>(MsgCmd::CheckCrcRsp), 0, 0, nCheckCrc); // End of params marker, return number of params sent and CRC
-    PostTxFrame(&tx);
+    PostTxFrameWithRetry(&tx);
 
 }
 
@@ -138,11 +168,11 @@ MsgCmd ProcessParamMsg(CANRxFrame *rx, uint16_t *nIndex) {
             if (param) {
                 uint32_t value = ReadParam(param);
                 EncodeParamRsp(&tx, static_cast<uint8_t>(MsgCmd::Read), msg.nIndex, msg.nSubIndex, value);
-                PostTxFrame(&tx);
+                PostTxFrameWithRetry(&tx);
                 break;
             }
             EncodeParamRsp(&tx, static_cast<uint8_t>(MsgCmd::ReadParamNotFound), msg.nIndex, msg.nSubIndex, 0);
-            PostTxFrame(&tx);
+            PostTxFrameWithRetry(&tx);
             break;
         }
 
@@ -151,28 +181,31 @@ MsgCmd ProcessParamMsg(CANRxFrame *rx, uint16_t *nIndex) {
             if (param && WriteParam(param, msg.nValue)) {
                 uint32_t value = ReadParam(param);
                 EncodeParamRsp(&tx, static_cast<uint8_t>(MsgCmd::Write), msg.nIndex, msg.nSubIndex, value);
-                PostTxFrame(&tx);
+                PostTxFrameWithRetry(&tx);
             }
             break;
         }
 
         case MsgCmd::ReadAll:
         case MsgCmd::ReadAllModified:
+            SetParamOpInProgress(true);
             nNumReadParams = 0;
             nReadCrc = 0xFFFFFFFF; // Reset CRC for new batch
             EncodeParamRsp(&tx, static_cast<uint8_t>(msg.eCmd), 0, 0, 0); // Start of params marker
-            PostTxFrame(&tx);
+            PostTxFrameWithRetry(&tx);
             chThdSleepMilliseconds(1);
             SendAllParams(msg.eCmd == MsgCmd::ReadAllModified);
+            SetParamOpInProgress(false); // ReadAllComplete already sent by SendAllParams
             break;
 
         case MsgCmd::WriteAll:
         case MsgCmd::WriteAllModified:
+            SetParamOpInProgress(true); // cleared on WriteAllComplete below
             nNumWriteParams = 0;
             nWriteCrc = 0xFFFFFFFF; // Reset CRC for new batch
             SetAllDefaultParams(true); // Clear temp values
             EncodeParamRsp(&tx, static_cast<uint8_t>(msg.eCmd), 0, 0, 0); // Start of params marker
-            PostTxFrame(&tx);
+            PostTxFrameWithRetry(&tx);
             break;
 
         case MsgCmd::WriteAllVal: {
@@ -180,13 +213,13 @@ MsgCmd ProcessParamMsg(CANRxFrame *rx, uint16_t *nIndex) {
             //Param not found or invalid value, respond with error
             if (!param){
                 EncodeParamRsp(&tx, static_cast<uint8_t>(MsgCmd::WriteAllParamNotFound), msg.nIndex, msg.nSubIndex, 0);
-                PostTxFrame(&tx);
+                PostTxFrameWithRetry(&tx);
                 break;
             }
             //Param out of range, respond with error
             if (!WriteParam(param, msg.nValue, true)) {
                 EncodeParamRsp(&tx, static_cast<uint8_t>(MsgCmd::WriteAllOutOfRange), msg.nIndex, msg.nSubIndex, msg.nValue);
-                PostTxFrame(&tx);
+                PostTxFrameWithRetry(&tx);
                 break;
             }
             nWriteCrc = CalculateCRC32Partial(&rx->data8[4], 4, nWriteCrc);
@@ -195,14 +228,21 @@ MsgCmd ProcessParamMsg(CANRxFrame *rx, uint16_t *nIndex) {
         }
 
         case MsgCmd::WriteAllComplete: {
-            // Ensure all params were written
+            // Only apply if every param was received AND the value stream wasn't corrupted
+            // (count alone can match even if a frame's bytes were mangled in transit).
             uint16_t nExpectedParams = rx->data8[1] | (rx->data8[2] << 8);
-            if (nNumWriteParams == nExpectedParams) {
+            uint32_t nExpectedCrc = msg.nValue; // host's CRC of what it sent, bytes 4-7
+
+            nWriteCrc = ~nWriteCrc; // Finalize CRC of what we actually received
+
+            uint8_t bApplied = (nNumWriteParams == nExpectedParams && nWriteCrc == nExpectedCrc) ? 1 : 0;
+            if (bApplied) {
                 ApplyTempParams();
             }
-            nWriteCrc = ~nWriteCrc; // Finalize CRC
-            EncodeParamRsp(&tx, static_cast<uint8_t>(MsgCmd::WriteAllComplete), nNumWriteParams, 0, nWriteCrc); // End of params marker, return number of params written and CRC
-            PostTxFrame(&tx);
+
+            EncodeParamRsp(&tx, static_cast<uint8_t>(MsgCmd::WriteAllComplete), nNumWriteParams, bApplied, nWriteCrc); // count, applied flag, and our CRC for comparison
+            PostTxFrameWithRetry(&tx);
+            SetParamOpInProgress(false);
             break;
         }
 

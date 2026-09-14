@@ -4,6 +4,7 @@
 #include "device_config.h"
 #include "mailbox.h"
 #include "msg.h"
+#include "param_protocol.h"
 
 #include <iterator>
 
@@ -26,14 +27,17 @@ void CanCyclicTxThread(void *)
     while (1)
     {
 
-        for (uint8_t i = 0; i < NUM_TX_MSGS; i++)
+        if (!IsCyclicTxPaused())
         {
-            msg = TxMsgs[i]();
-            if (!msg.bSend)
-                continue;
-            msg.frame.IDE = CAN_IDE_STD;
-            msg.frame.RTR = CAN_RTR_DATA;
-            PostTxFrame(&msg.frame);
+            for (uint8_t i = 0; i < NUM_TX_MSGS; i++)
+            {
+                msg = TxMsgs[i]();
+                if (!msg.bSend)
+                    continue;
+                msg.frame.IDE = CAN_IDE_STD;
+                msg.frame.RTR = CAN_RTR_DATA;
+                PostTxFrame(&msg.frame);
+            }
         }
 
         if (chThdShouldTerminateX())
