@@ -61,3 +61,18 @@ const ParamInfo* FindParam(uint16_t index, uint8_t subindex);
 uint32_t ReadParam(const ParamInfo* param, bool temp = false);
 bool WriteParam(const ParamInfo* param, uint32_t value, bool temp = false);
 bool IsDefaultValue(const ParamInfo* param);
+
+// Tracks which params have been received during the current full WriteAll, so a failed
+// WriteAllComplete can report exactly what's missing instead of forcing a full resend.
+// Only meaningful for full WriteAll (WriteAllModified sends a host-chosen subset, so
+// firmware can't tell "never sent" from "dropped").
+void ResetWriteReceivedMask();
+void MarkParamReceived(const ParamInfo* param);
+bool IsParamReceived(uint16_t i);
+uint16_t CountReceivedParams();
+
+// CRC32 over all NUM_PARAMS values in canonical table order, reading either the live
+// (temp=false) or staged temp (temp=true) value for each. Order-independent by construction,
+// so it verifies correctly regardless of what order WriteAllVal frames actually arrived in
+// (including across a missing-param patch round).
+uint32_t CalcParamsCrc(bool temp = false);

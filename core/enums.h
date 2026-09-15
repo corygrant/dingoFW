@@ -52,8 +52,10 @@ enum class MsgCmd : uint8_t
     WriteAllVal = 21,
     WriteAllComplete = 22,
     WriteAllModified = 23,
+    WriteAllMissing = 24,     // one frame per missing (index, subindex) after a failed WriteAllComplete
     WriteAllParamNotFound = 25,
     WriteAllOutOfRange = 26,
+    WriteAllMissingDone = 27, // terminates the WriteAllMissing list; count field, or 0xFFFF sentinel
 
     BurnSettings = 30,
     Version = 31,

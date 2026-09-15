@@ -1,6 +1,8 @@
 #include "param_registry.h"
 #include "params.h"
+#include "crc.h"
 #include <cstring>
+#include <bit>
 
 //=============================================================================
 // Parameter Table - Lives in flash (.rodata)
@@ -74,6 +76,33 @@ const ParamInfo stParams[] = {
 };
 
 const uint16_t NUM_PARAMS = sizeof(stParams) / sizeof(stParams[0]);
+
+//=============================================================================
+// WriteAll received-param tracking (full WriteAll only, see param_registry.h)
+//=============================================================================
+
+static uint8_t writeReceivedMask[(NUM_PARAMS + 7) / 8];
+
+void ResetWriteReceivedMask() {
+    memset(writeReceivedMask, 0, sizeof(writeReceivedMask));
+}
+
+void MarkParamReceived(const ParamInfo* param) {
+    if (param == nullptr) return;
+    size_t i = param - stParams; // valid: param always points into stParams[]
+    writeReceivedMask[i / 8] |= static_cast<uint8_t>(1u << (i % 8));
+}
+
+bool IsParamReceived(uint16_t i) {
+    return (writeReceivedMask[i / 8] & (1u << (i % 8))) != 0;
+}
+
+uint16_t CountReceivedParams() {
+    uint16_t count = 0;
+    for (size_t i = 0; i < sizeof(writeReceivedMask); i++)
+        count += static_cast<uint16_t>(std::popcount(writeReceivedMask[i]));
+    return count;
+}
 
 //=============================================================================
 // Parameter Access Functions
@@ -191,4 +220,24 @@ bool IsDefaultValue(const ParamInfo* param)
         return false;
 
     return ReadParam(param) == param->nDefaultVal;
+}
+
+uint32_t CalcParamsCrc(bool temp)
+{
+    uint32_t crc = 0xFFFFFFFF;
+
+    for (uint16_t i = 0; i < NUM_PARAMS; i++) {
+        uint32_t value = ReadParam(&stParams[i], temp);
+        // Little-endian wire encoding, matching EncodeParamRsp's data8[4..7] layout,
+        // independent of host byte order.
+        uint8_t bytes[4] = {
+            static_cast<uint8_t>(value & 0xFF),
+            static_cast<uint8_t>((value >> 8) & 0xFF),
+            static_cast<uint8_t>((value >> 16) & 0xFF),
+            static_cast<uint8_t>((value >> 24) & 0xFF)
+        };
+        crc = CalculateCRC32Partial(bytes, 4, crc);
+    }
+
+    return ~crc;
 }
