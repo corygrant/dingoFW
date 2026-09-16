@@ -46,9 +46,7 @@ void EncodeParamRsp(CANTxFrame *tx, uint8_t cmd, uint16_t index, uint8_t subinde
 
 #define TX_MAX_RETRIES 50   // 50 × 200µs = 10ms max stall per frame before aborting
 
-// Retry a TX post against a momentarily-full mailbox instead of dropping it.
-// Used for every param-protocol response so a busy bus doesn't silently
-// swallow a reply and force the host to wait out its full timeout.
+// Retry a TX post when mailbox is full
 msg_t PostTxFrameWithRetry(CANTxFrame *tx) {
     msg_t ret;
     uint8_t txRetries = 0;
@@ -141,18 +139,10 @@ void ApplyTempParams() {
     }
 }
 
-// True if the WriteAll currently in flight was WriteAllModified rather than a full WriteAll.
-// Only full WriteAll supports the missing-param report/patch flow below: WriteAllModified
-// sends a host-chosen subset, so an unset bit in writeReceivedMask can't be told apart from
-// "never supposed to be sent" versus "dropped".
 static bool bLastWriteWasModified = false;
 
 #define MAX_WRITE_ALL_MISSING_REPORTED 16
 
-// Reports exactly which params are missing after a failed full-WriteAll WriteAllComplete, so
-// the host can patch just those instead of re-streaming everything. If there are too many to
-// enumerate usefully, or the mismatch isn't attributable to any missing param (bForceOverflow),
-// skip the list and send the 0xFFFF sentinel so the host falls back to a full resend.
 static void SendWriteAllMissingList(bool bForceOverflow) {
     CANTxFrame tx;
     bool bOverflow = bForceOverflow;
@@ -275,10 +265,7 @@ MsgCmd ProcessParamMsg(CANRxFrame *rx, uint16_t *nIndex) {
             bool bCrcMismatchOnFullCount = false;
 
             if (bLastWriteWasModified) {
-                // Only apply if every param was received AND the value stream wasn't corrupted
-                // (count alone can match even if a frame's bytes were mangled in transit).
-                // WriteAllModified sends a host-chosen subset, so there's no missing-param
-                // report/patch here — a mismatch just fails, as before.
+                // Only apply if every param was received
                 nWriteCrc = ~nWriteCrc; // Finalize CRC of what we actually received
                 bApplied = (nNumWriteParams == nExpectedParams && nWriteCrc == nExpectedCrc) ? 1 : 0;
                 if (bApplied) {
@@ -287,10 +274,7 @@ MsgCmd ProcessParamMsg(CANRxFrame *rx, uint16_t *nIndex) {
                 nReportedCount = nNumWriteParams;
                 nReportedCrc = nWriteCrc;
             } else {
-                // Full WriteAll: verify via the received-param bitset and a canonical
-                // table-order CRC over temp values, both of which are independent of the
-                // order frames actually arrived in — so this checks the same way whether
-                // it's the first attempt or after a missing-param patch round.
+                // Full WriteAll, count params instead of relying on receive order
                 uint16_t nReceived = CountReceivedParams();
                 uint32_t nCrc = (nReceived == nExpectedParams) ? CalcParamsCrc(true) : 0;
                 bApplied = (nReceived == nExpectedParams && nCrc == nExpectedCrc) ? 1 : 0;
@@ -304,11 +288,9 @@ MsgCmd ProcessParamMsg(CANRxFrame *rx, uint16_t *nIndex) {
                 nReportedCrc = nCrc;
             }
 
-            EncodeParamRsp(&tx, static_cast<uint8_t>(MsgCmd::WriteAllComplete), nReportedCount, bApplied, nReportedCrc); // count, applied flag, and our CRC for comparison
+            EncodeParamRsp(&tx, static_cast<uint8_t>(MsgCmd::WriteAllComplete), nReportedCount, bApplied, nReportedCrc);
             PostTxFrameWithRetry(&tx);
 
-            // Sent after WriteAllComplete, never before: software only starts collecting
-            // WriteAllMissing frames once it has seen the failing WriteAllComplete.
             if (bNeedsMissingList) {
                 SendWriteAllMissingList(bCrcMismatchOnFullCount);
             }
