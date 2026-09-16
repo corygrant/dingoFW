@@ -18,8 +18,9 @@ struct Config_CanInput{
   ByteOrder eByteOrder;
   bool bSigned;        
   Operator eOperator;
-  float fOperand;       
+  float fOperand;
   InputMode eMode;
+  uint8_t nBus;
 };
 
 class CanInput
@@ -30,7 +31,7 @@ public:
 
     static const uint16_t nBaseIndex = 0x1300;
 
-    bool CheckMsg(CANRxFrame frame);
+    bool CheckMsg(CANRxFrame frame, uint8_t nRxBus);
 
     void SetConfig(Config_CanInput* config) { pConfig = config; }
     void CheckTimeout();

@@ -74,6 +74,15 @@ enum class MsgType : uint8_t
     Error = 'E'
 };
 
+// Some MCU device headers (e.g. STM32G4xx's, via hal.h) #define a bare USB
+// macro for the USB_TypeDef* peripheral pointer, which collides with the
+// enumerator name below (the preprocessor doesn't know MsgSrc::USB is
+// scoped). #undef is a no-op - zero cost - on every chip family that
+// doesn't define this macro.
+#ifdef USB
+#undef USB
+#endif
+
 enum class MsgSrc : uint8_t
 {
     State_Run = 1,

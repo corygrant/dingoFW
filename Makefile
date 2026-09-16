@@ -120,6 +120,13 @@ include $(CHIBIOS)/tools/mk/autobuild.mk
 # include board.mk that sets per-board options
 include $(BOARDDIR)/board.mk
 
+# CAN peripheral backend, selected by board.mk. Boards with a single bxCAN
+# bus (the default) don't need to set this. A board with FDCAN/multiple
+# buses sets CAN_BACKEND_SRC = comms/can_fdcan.cpp in its own board.mk.
+ifeq ($(CAN_BACKEND_SRC),)
+	CAN_BACKEND_SRC = comms/can_bxcan.cpp
+endif
+
 # Define linker script file here
 # LDSCRIPT= $(STARTUPLD)/STM32F446xE.ld
 # Use custom linker script to override Reset_Handler
@@ -137,7 +144,7 @@ CPPSRC = $(ALLCPPSRC) \
 				 $(BOARDDIR)/msg.cpp \
 				 $(BOARDDIR)/hw_devices.cpp \
 				 $(CPPSRC_BOARD) \
-				 comms/can.cpp \
+				 $(CAN_BACKEND_SRC) \
 				 comms/infomsg.cpp \
 				 comms/mailbox.cpp \
 				 comms/request_msg.cpp \

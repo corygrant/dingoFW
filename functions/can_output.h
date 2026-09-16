@@ -2,19 +2,21 @@
 
 #include "hal.h"
 #include "enums.h"
+#include "port.h"
 
 struct Config_CanOutput{
   bool bEnabled;
   uint16_t nInput;
   uint8_t nIDE; //0=STD, 1=EXT
   uint32_t nID;
-  uint8_t nStartBit;   
-  uint8_t nBitLength;  
-  float fFactor;       
-  float fOffset;       
+  uint8_t nStartBit;
+  uint8_t nBitLength;
+  float fFactor;
+  float fOffset;
   ByteOrder eByteOrder;
   bool bSigned;
   uint16_t nInterval; //ms
+  uint8_t nBus;
 };
 
 class CanOutput
@@ -34,4 +36,5 @@ public:
     CANTxFrame stFrame;
     uint16_t nInterval; //ms
     uint32_t nLastTxTime;
+    uint8_t nBus;
 };

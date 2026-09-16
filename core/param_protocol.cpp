@@ -5,6 +5,7 @@
 #include "config_handler.h"
 #include "crc.h"
 #include <cstring>
+#include "can_frame.h"
 
 extern DeviceConfig stConfig;
 
@@ -28,11 +29,9 @@ void DecodeParamCmd(CANRxFrame *rx, ParamMsg *out)
 
 void EncodeParamRsp(CANTxFrame *tx, uint8_t cmd, uint16_t index, uint8_t subindex, uint32_t value)
 {
-    tx->IDE = 0;
-    tx->RTR = 0;
+    CanFrameSetStandardDefaults(*tx);
     tx->DLC = 8;
-
-    tx->SID =  stConfig.stDevice.nBaseId + CONFIG_TX_OFFSET;
+    CanFrameSetId(*tx, stConfig.stDevice.nBaseId + CONFIG_TX_OFFSET, false);
 
     tx->data8[0] = cmd;
     tx->data8[1] = index & 0xFF;
@@ -51,7 +50,7 @@ msg_t PostTxFrameWithRetry(CANTxFrame *tx) {
     msg_t ret;
     uint8_t txRetries = 0;
     do {
-        ret = PostTxFrame(tx);
+        ret = PostTxFrame(tx, 0); // Param protocol is settings traffic, bus 0 only
         if (ret != MSG_OK) {
             chThdSleepMicroseconds(200);
             txRetries++;
@@ -176,7 +175,7 @@ MsgCmd ProcessParamMsg(CANRxFrame *rx, uint16_t *nIndex) {
     CANTxFrame tx;
     ParamMsg msg;
 
-    if (rx->SID != stConfig.stDevice.nBaseId + CONFIG_RX_OFFSET)
+    if (CanFrameGetStdId(*rx) != (uint32_t)(stConfig.stDevice.nBaseId + CONFIG_RX_OFFSET))
         return MsgCmd::Invalid;
 
     if (rx->DLC != 8)

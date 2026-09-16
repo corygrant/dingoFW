@@ -1,3 +1,8 @@
+// bxCAN backend (STM32F1/F3/F4 CAN peripheral). Used by every board with
+// NUM_CAN_BUSES == 1. Only bus 0 exists here; the nBus parameters accepted
+// by the public API (comms/can.h) are accepted for signature compatibility
+// with comms/can_fdcan.cpp but otherwise unused - this backend only ever
+// drives CAND1.
 #include "can.h"
 #include "hal.h"
 #include "port.h"
@@ -5,6 +10,7 @@
 #include "mailbox.h"
 #include "msg.h"
 #include "param_protocol.h"
+#include "can_frame.h"
 
 #include <iterator>
 
@@ -34,8 +40,7 @@ void CanCyclicTxThread(void *)
                 msg = TxMsgs[i]();
                 if (!msg.bSend)
                     continue;
-                msg.frame.IDE = CAN_IDE_STD;
-                msg.frame.RTR = CAN_RTR_DATA;
+                CanFrameSetStandardDefaults(msg.frame);
                 PostTxFrame(&msg.frame);
             }
         }
@@ -63,8 +68,6 @@ void CanTxThread(void *)
             res = FetchTxFrame(&msg);
             if (res == MSG_OK)
             {
-                msg.IDE = CAN_IDE_STD;
-                msg.RTR = CAN_RTR_DATA;
                 canTransmitTimeout(&CAND1, CAN_ANY_MAILBOX, &msg, TIME_MS2I(10));
             }
             chThdSleepMicroseconds(CAN_TX_MSG_SPLIT);
@@ -100,12 +103,12 @@ void CanRxThread(void *)
             {
                 //Copy data to USB for data pass through
                 //Don't send if it's a settings msg for this device
-                if((msg.SID != stConfig.stDevice.nBaseId + CONFIG_RX_OFFSET) && 
-                   (msg.SID != stConfig.stDevice.nBaseId + CONFIG_TX_OFFSET)) 
+                uint32_t nId = CanFrameGetStdId(msg);
+                if((nId != (uint32_t)(stConfig.stDevice.nBaseId + CONFIG_RX_OFFSET)) &&
+                   (nId != (uint32_t)(stConfig.stDevice.nBaseId + CONFIG_TX_OFFSET)))
                 {
                     //If USB not connected, mailbox will fill up and messages will be dropped
-                    usbTx.SID = msg.SID;
-                    usbTx.IDE = msg.IDE;
+                    CanFrameSetId(usbTx, nId, false);
                     usbTx.DLC = msg.DLC;
                     for(size_t i = 0; i < msg.DLC; i++)
                         usbTx.data8[i] = msg.data8[i];
@@ -167,7 +170,7 @@ void StopCan()
     canRxThreadRef = NULL;
 }
 
-void ClearCanFilters()
+void ClearCanFilters(uint8_t /*nBus*/)
 {
     // Clear all filters
     for (uint8_t i = 0; i < STM32_CAN_MAX_FILTERS; i++)
@@ -184,7 +187,7 @@ void ClearCanFilters()
     }
 }
 
-void SetCanFilterId(uint8_t nFilterNum, uint32_t nId, bool bExtended)
+void SetCanFilterId(uint8_t nFilterNum, uint32_t nId, bool bExtended, uint8_t /*nBus*/)
 {
     if (nFilterNum >= (STM32_CAN_MAX_FILTERS * 2))
         return;
@@ -249,9 +252,39 @@ uint32_t GetLastCanRxTime()
     return nLastCanRxTime;
 }
 
-void SetCanFilterEnabled(bool bEnabled)
+void SetCanFilterEnabled(bool bEnabled, uint8_t /*nBus*/)
 {
     bCanFilterEnabled = bEnabled;
 
     // TODO: Reconfigure filters if enabled/disabled
+}
+
+// --- comms/can_frame.h portable frame accessors (bxCAN layout) ---
+
+uint32_t CanFrameGetStdId(const CANRxFrame &frame) { return frame.SID; }
+uint32_t CanFrameGetExtId(const CANRxFrame &frame) { return frame.EID; }
+uint32_t CanFrameGetStdId(const CANTxFrame &frame) { return frame.SID; }
+uint32_t CanFrameGetExtId(const CANTxFrame &frame) { return frame.EID; }
+
+bool CanFrameIsExtended(const CANTxFrame &frame) { return frame.IDE != 0; }
+
+void CanFrameSetId(CANTxFrame &frame, uint32_t nId, bool bExtended)
+{
+    frame.IDE = bExtended ? CAN_IDE_EXT : CAN_IDE_STD;
+    if (bExtended)
+        frame.EID = nId;
+    else
+        frame.SID = nId;
+}
+
+void CanFrameClearId(CANTxFrame &frame)
+{
+    frame.IDE = 0;
+    frame.EID = 0; // Clears SID as well, union
+}
+
+void CanFrameSetStandardDefaults(CANTxFrame &frame)
+{
+    frame.IDE = CAN_IDE_STD;
+    frame.RTR = CAN_RTR_DATA;
 }

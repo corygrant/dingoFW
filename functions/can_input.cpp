@@ -1,15 +1,18 @@
 #include "can_input.h"
 #include "dbc.h"
+#include "can_frame.h"
 
-bool CanInput::CheckMsg(CANRxFrame rx)
+bool CanInput::CheckMsg(CANRxFrame rx, uint8_t nRxBus)
 {
     if (!pConfig->bEnabled)
         return false;
+    if (pConfig->nBus != nRxBus)
+        return false;
     if (pConfig->nIDE &&
-        (pConfig->nID != rx.EID))
+        (pConfig->nID != CanFrameGetExtId(rx)))
         return false;
     if (!pConfig->nIDE &&
-        (pConfig->nID != rx.SID))
+        (pConfig->nID != CanFrameGetStdId(rx)))
         return false;
     if (pConfig->nBitLength == 0)
         return false;

@@ -258,30 +258,38 @@ void CyclicUpdate()
 {
     CANRxFrame rxMsg;
 
-    while (!RxFramesEmpty())
+    for (uint8_t nBus = 0; nBus < NUM_CAN_BUSES; nBus++)
     {
-        msg_t res = FetchRxFrame(&rxMsg);
-        if (res == MSG_OK)
+        while (!RxFramesEmpty(nBus))
         {
-            for (uint8_t i = 0; i < NUM_CAN_INPUTS; i++)
-                canIn[i].CheckMsg(rxMsg);
-
-            #if NUM_KEYPADS > 0
-            for (uint8_t i = 0; i < NUM_KEYPADS; i++)
-                keypad[i].CheckMsg(rxMsg);
-            #endif
-
-            CheckRequestMsgs(&rxMsg);
-            
-            uint16_t nIndex = 0;
-            MsgCmd cmd = ProcessParamMsg(&rxMsg, &nIndex);
-            if (cmd == MsgCmd::WriteAllComplete)
+            msg_t res = FetchRxFrame(&rxMsg, nBus);
+            if (res == MSG_OK)
             {
-                ApplyAllConfig();
-            }
-            if (cmd == MsgCmd::Write)
-            {
-                ApplyConfig(nIndex & 0xFF00); // Mask instance, only base index is needed
+                for (uint8_t i = 0; i < NUM_CAN_INPUTS; i++)
+                    canIn[i].CheckMsg(rxMsg, nBus);
+
+                #if NUM_KEYPADS > 0
+                for (uint8_t i = 0; i < NUM_KEYPADS; i++)
+                    keypad[i].CheckMsg(rxMsg);
+                #endif
+
+                // Settings-over-CAN protocol and USB<->CAN passthrough only
+                // listen on bus 0; the other bus/es are data-only.
+                if (nBus == 0)
+                {
+                    CheckRequestMsgs(&rxMsg);
+
+                    uint16_t nIndex = 0;
+                    MsgCmd cmd = ProcessParamMsg(&rxMsg, &nIndex);
+                    if (cmd == MsgCmd::WriteAllComplete)
+                    {
+                        ApplyAllConfig();
+                    }
+                    if (cmd == MsgCmd::Write)
+                    {
+                        ApplyConfig(nIndex & 0xFF00); // Mask instance, only base index is needed
+                    }
+                }
             }
         }
     }

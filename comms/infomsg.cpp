@@ -3,6 +3,7 @@
 #include "config.h"
 #include "device_config.h"
 #include "status.h"
+#include "can_frame.h"
 
 static InfoMsg StateRunMsg(MsgType::Info, MsgSrc::State_Run);
 #if CAN_SLEEP
@@ -74,9 +75,9 @@ void SendInfoMsg(MsgType type, MsgSrc src, uint16_t nId, uint16_t nData0, uint16
     tx.data16[2] = nData1;
     tx.data16[3] = nData2;
 
-    tx.SID = nId + CONFIG_TX_OFFSET;
-    tx.IDE = CAN_IDE_STD;
-    PostTxFrame(&tx);
+    CanFrameSetStandardDefaults(tx);
+    CanFrameSetId(tx, nId + CONFIG_TX_OFFSET, false);
+    PostTxFrame(&tx, 0); // InfoMsgs are settings/status traffic, bus 0 only
 }
 
 void InitInfoMsgs()

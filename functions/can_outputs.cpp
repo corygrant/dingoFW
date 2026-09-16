@@ -1,6 +1,7 @@
 #include "can_outputs.h"
 #include "mailbox.h"
 #include "dbc.h"
+#include "can_frame.h"
 
 Config_CanOutput* CanOutputs::pConfigs[NUM_CAN_OUTPUTS];
 float* CanOutputs::pInput[NUM_CAN_OUTPUTS];
@@ -11,10 +12,11 @@ void CanOutputs::ClearFrames()
 {
     for (int i = 0; i < CAN_OUT_FRAMES; ++i)
     {
-        canOut[i].stFrame.data64[0] = 0;
+        canOut[i].stFrame.data32[0] = 0;
+        canOut[i].stFrame.data32[1] = 0;
         canOut[i].stFrame.DLC = 0;
-        canOut[i].stFrame.IDE = 0;
-        canOut[i].stFrame.EID = 0; //Clears SID as well, union
+        CanFrameClearId(canOut[i].stFrame);
+        canOut[i].nBus = 0;
     }
 
     for (int i = 0; i < NUM_CAN_OUTPUTS; ++i)
@@ -45,8 +47,9 @@ void CanOutputs::InitAllFrames()
         {
             if (canOut[j].stFrame.DLC == 0) continue; // Unused frame slot
 
-            bool bMatch = (nNewIDE == 0) ? (canOut[j].stFrame.IDE == 0 && canOut[j].stFrame.SID == nNewID)
-                                      : (canOut[j].stFrame.IDE == 1 && canOut[j].stFrame.EID == nNewID);
+            bool bMatch = (nNewIDE == 0) ? (!CanFrameIsExtended(canOut[j].stFrame) && CanFrameGetStdId(canOut[j].stFrame) == nNewID)
+                                      : (CanFrameIsExtended(canOut[j].stFrame) && CanFrameGetExtId(canOut[j].stFrame) == nNewID);
+            bMatch = bMatch && (canOut[j].nBus == pConfigs[i]->nBus);
             if (bMatch)
             {
                 nAssignedOut[i] = j;
@@ -72,14 +75,8 @@ void CanOutputs::InitAllFrames()
             if (canOut[j].stFrame.DLC == 0)
             {
                 nAssignedOut[i] = j;
-                canOut[j].stFrame.IDE = nNewIDE;
-
-                //Only set one
-                //SID and EID are a union
-                if(nNewIDE == 0)
-                    canOut[j].stFrame.SID = nNewID;
-                else
-                    canOut[j].stFrame.EID = nNewID;
+                CanFrameSetId(canOut[j].stFrame, nNewID, nNewIDE != 0);
+                canOut[j].nBus = pConfigs[i]->nBus;
 
                 canOut[j].stFrame.DLC = CalcDlc(nNewStartBit, nNewBitLen);
                 canOut[j].nInterval = nNewInterval;
@@ -107,7 +104,7 @@ void CanOutputs::Update()
                 }
             }
 
-            PostTxFrame(&canOut[i].stFrame);
+            PostTxFrame(&canOut[i].stFrame, canOut[i].nBus);
         }
     }
 }

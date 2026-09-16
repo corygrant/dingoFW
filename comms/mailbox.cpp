@@ -2,65 +2,72 @@
 #include "ch.hpp"
 #include "port.h"
 
-static chibios_rt::Mailbox<CANRxFrame*, MAILBOX_SIZE> rxMb;
-static chibios_rt::Mailbox<CANTxFrame*, MAILBOX_SIZE> txMb;
+// One RX/TX mailbox set per physical CAN bus. The USB mailbox stays a single
+// shared instance - USB<->CAN passthrough is bus-0-only (see
+// comms/can_bxcan.cpp / comms/can_fdcan.cpp).
+struct CanBusMailbox
+{
+    chibios_rt::Mailbox<CANRxFrame*, MAILBOX_SIZE> rxMb;
+    chibios_rt::Mailbox<CANTxFrame*, MAILBOX_SIZE> txMb;
+
+    CANRxFrame rxFrames[MAILBOX_SIZE];
+    CANTxFrame txFrames[MAILBOX_SIZE];
+
+    bool rxMsgUsed[MAILBOX_SIZE] = {};
+    bool txMsgUsed[MAILBOX_SIZE] = {};
+
+    chibios_rt::Mutex rxMutex;
+    chibios_rt::Mutex txMutex;
+};
+static CanBusMailbox canBus[NUM_CAN_BUSES];
+
 static chibios_rt::Mailbox<CANTxFrame*, MAILBOX_SIZE> txUsbMb;
-
-//Mailbox buffer of CAN frames
-//Not managed by mailbox
-CANRxFrame rxFrames[MAILBOX_SIZE];
-CANTxFrame txFrames[MAILBOX_SIZE];
 CANTxFrame txUsbFrames[MAILBOX_SIZE];
-
-//Used to manage the memory used by the mailbox
-bool rxMsgUsed[MAILBOX_SIZE];
-bool txMsgUsed[MAILBOX_SIZE];
 bool txUsbMsgUsed[MAILBOX_SIZE];
-
-// Mutexes protecting each *MsgUsed array from concurrent access between
-// Post* (CanRxThread/main thread) and Fetch* (CanTxThread/main thread).
-// Priority inheritance ensures no priority inversion across thread priorities.
-static chibios_rt::Mutex rxMutex;
-static chibios_rt::Mutex txMutex;
 static chibios_rt::Mutex txUsbMutex;
 
-msg_t PostTxFrame(CANTxFrame *frame)
+msg_t PostTxFrame(CANTxFrame *frame, uint8_t nBus)
 {
-    txMutex.lock();
-    for (int i = 0; i < MAILBOX_SIZE; i++) {
-        if (!txMsgUsed[i]) {
-            txFrames[i] = *frame;
-            txMsgUsed[i] = true;
+    CanBusMailbox &bus = canBus[nBus];
 
-            msg_t result = txMb.post(&txFrames[i], TIME_IMMEDIATE);
+    bus.txMutex.lock();
+    for (int i = 0; i < MAILBOX_SIZE; i++) {
+        if (!bus.txMsgUsed[i]) {
+            bus.txFrames[i] = *frame;
+            bus.txMsgUsed[i] = true;
+
+            msg_t result = bus.txMb.post(&bus.txFrames[i], TIME_IMMEDIATE);
             if (result != MSG_OK) {
-                txMsgUsed[i] = false;
-                txMutex.unlock();
+                bus.txMsgUsed[i] = false;
+                bus.txMutex.unlock();
                 return result;
             }
-            txMutex.unlock();
-            PostTxUsbFrame(frame);  // Only post to USB after successful CAN TX post
+            bus.txMutex.unlock();
+            if (nBus == 0)
+                PostTxUsbFrame(frame);  // Only mirror bus 0's TX to USB
             return result;
         }
     }
 
-    txMutex.unlock();
+    bus.txMutex.unlock();
     return MSG_TIMEOUT;  // No free slots
 }
 
-msg_t FetchTxFrame(CANTxFrame *frame)
+msg_t FetchTxFrame(CANTxFrame *frame, uint8_t nBus)
 {
+    CanBusMailbox &bus = canBus[nBus];
+
     CANTxFrame *txFrame;
-    msg_t result = txMb.fetch(&txFrame, TIME_IMMEDIATE);
+    msg_t result = bus.txMb.fetch(&txFrame, TIME_IMMEDIATE);
     if (result == MSG_OK) {
-        txMutex.lock();
+        bus.txMutex.lock();
         for (int i = 0; i < MAILBOX_SIZE; i++) {
-            if (txFrame == &txFrames[i]) {
-                txMsgUsed[i] = false;
+            if (txFrame == &bus.txFrames[i]) {
+                bus.txMsgUsed[i] = false;
                 break;
             }
         }
-        txMutex.unlock();
+        bus.txMutex.unlock();
         *frame = *txFrame;
     }
     return result;
@@ -104,45 +111,49 @@ msg_t FetchTxUsbFrame(CANTxFrame *frame)
     return result;
 }
 
-msg_t PostRxFrame(CANRxFrame *frame)
+msg_t PostRxFrame(CANRxFrame *frame, uint8_t nBus)
 {
-    rxMutex.lock();
-    for (int i = 0; i < MAILBOX_SIZE; i++) {
-        if (!rxMsgUsed[i]) {
-            rxFrames[i] = *frame;
-            rxMsgUsed[i] = true;
+    CanBusMailbox &bus = canBus[nBus];
 
-            msg_t result = rxMb.post(&rxFrames[i], TIME_IMMEDIATE);
+    bus.rxMutex.lock();
+    for (int i = 0; i < MAILBOX_SIZE; i++) {
+        if (!bus.rxMsgUsed[i]) {
+            bus.rxFrames[i] = *frame;
+            bus.rxMsgUsed[i] = true;
+
+            msg_t result = bus.rxMb.post(&bus.rxFrames[i], TIME_IMMEDIATE);
             if (result != MSG_OK)
-                rxMsgUsed[i] = false;
-            rxMutex.unlock();
+                bus.rxMsgUsed[i] = false;
+            bus.rxMutex.unlock();
             return result;
         }
     }
 
-    rxMutex.unlock();
+    bus.rxMutex.unlock();
     return MSG_TIMEOUT;  // No free slots
-}   
+}
 
-msg_t FetchRxFrame(CANRxFrame *frame)
+msg_t FetchRxFrame(CANRxFrame *frame, uint8_t nBus)
 {
+    CanBusMailbox &bus = canBus[nBus];
+
     CANRxFrame *rxFrame;
-    msg_t result = rxMb.fetch(&rxFrame, TIME_IMMEDIATE);
+    msg_t result = bus.rxMb.fetch(&rxFrame, TIME_IMMEDIATE);
     if (result == MSG_OK) {
-        rxMutex.lock();
+        bus.rxMutex.lock();
         for (int i = 0; i < MAILBOX_SIZE; i++) {
-            if (rxFrame == &rxFrames[i]) {
-                rxMsgUsed[i] = false;
+            if (rxFrame == &bus.rxFrames[i]) {
+                bus.rxMsgUsed[i] = false;
                 break;
             }
         }
-        rxMutex.unlock();
+        bus.rxMutex.unlock();
         *frame = *rxFrame;
     }
     return result;
 }
 
-bool RxFramesEmpty()
+bool RxFramesEmpty(uint8_t nBus)
 {
-    return (rxMb.getUsedCountI() == 0);
+    return (canBus[nBus].rxMb.getUsedCountI() == 0);
 }
