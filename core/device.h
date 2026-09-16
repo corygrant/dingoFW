@@ -66,9 +66,13 @@ extern Analog_Input analogIn[NUM_ANALOG_INPUTS];
 extern DeviceConfig stConfig;
 extern DeviceConfig stConfigTemp; // Used for staging new config before applying
 extern float *pVarMap[VAR_MAP_SIZE];
-extern DeviceState eState;
-extern bool bDeviceOverTemp;
-extern bool bDeviceCriticalTemp;
+// Written by DeviceThread, read by CanCyclicTxThread (eState) and SlowThread
+// (bDeviceOverTemp/bDeviceCriticalTemp are the reverse: written by SlowThread,
+// read by DeviceThread) - volatile so neither reader thread can have a cached
+// value.
+extern volatile DeviceState eState;
+extern volatile bool bDeviceOverTemp;
+extern volatile bool bDeviceCriticalTemp;
 
 #if HAS_EXT_TEMP_SENSOR
 extern float fTempSensor;

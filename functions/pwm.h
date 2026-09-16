@@ -85,7 +85,9 @@ private:
     void UpdateSoftStart();
     void UpdateFrequency();
 
-    uint16_t nDutyCycle;
+    // Written by DeviceThread's Update(), read by CanCyclicTxThread via
+    // Profet::GetDutyCycle() -> GetDutyCycle() below.
+    volatile uint16_t nDutyCycle;
     uint16_t nLastFreq;
 
     bool bChannelEnabled;

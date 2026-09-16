@@ -18,7 +18,8 @@ static CANFilter canfilters[STM32_CAN_MAX_FILTERS];
 static uint32_t nFilterIds[STM32_CAN_MAX_FILTERS * 2];
 static bool bFilterExtended[STM32_CAN_MAX_FILTERS * 2];
 
-static uint32_t nLastCanRxTime;
+// Written by CanRxThread, read by DeviceThread via GetLastCanRxTime().
+static volatile uint32_t nLastCanRxTime;
 static bool bCanFilterEnabled = true;
 
 void ConfigureCanFilters();

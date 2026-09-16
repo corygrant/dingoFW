@@ -59,6 +59,10 @@ public:
     float fAnalogVal[KEYPAD_MAX_ANALOG_INPUTS];
 
     Config_Keypad* pConfig = nullptr;
+    // Points into pVarMap[] (float*, same-thread elsewhere), but this
+    // particular pointer is also dereferenced from KeypadThread while
+    // DeviceThread owns whatever it points at - callers in blink_keypad.cpp/
+    // grayhill_keypad.cpp read through a volatile cast for that reason.
     float* pDimmingInput = nullptr;
 
     uint8_t nBacklightBrightness = 0;

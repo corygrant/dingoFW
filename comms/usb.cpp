@@ -394,9 +394,14 @@ void UsbTxThread(void *)
     }
 }
 
-void Parse(uint8_t *data, uint8_t dataLen, CANRxFrame *frame)
+// Returns true only if a complete, valid frame was decoded into *frame -
+// callers must not read *frame when this returns false (it may be untouched).
+bool Parse(uint8_t *data, uint8_t dataLen, CANRxFrame *frame)
 {
     uint8_t firstPos;
+
+    if (dataLen < 5)
+        return false;
 
     // Convert from ASCII (2nd character to end)
     for (uint8_t i = 1; i < dataLen; i++)
@@ -412,23 +417,31 @@ void Parse(uint8_t *data, uint8_t dataLen, CANRxFrame *frame)
             data[i] = data[i] - '0';
     }
 
-    if (data[0] == 't')
+    if (data[0] != 't')
+        return false;
+
+    uint8_t nDlc = data[4];
+    if (nDlc > 8)
+        return false; // Classic CAN DLC is 0-8; data8[] is only 8 bytes wide
+
+    firstPos = 5;
+
+    if (dataLen < (uint16_t)firstPos + 2 * (uint16_t)nDlc)
+        return false; // Line too short to contain nDlc data bytes
+
+    frame->SID = ((data[1] & 0xF) << 8) + ((data[2] & 0xF) << 4) + (data[3] & 0xF);
+    frame->DLC = nDlc;
+
+    for (int i = 0; i < frame->DLC; i++)
     {
-        frame->SID = ((data[1] & 0xF) << 8) + ((data[2] & 0xF) << 4) + (data[3] & 0xF);
-
-        frame->DLC = data[4];
-
-        firstPos = 5;
-
-        for (int i = 0; i < frame->DLC; i++)
-        {
-            frame->data8[i] = ((data[i + firstPos] & 0xF) << 4) + (data[i + firstPos + 1] & 0xF);
-            firstPos++;
-        }
-
-        frame->IDE = CAN_IDE_STD;
-        frame->RTR = CAN_RTR_DATA;
+        frame->data8[i] = ((data[i + firstPos] & 0xF) << 4) + (data[i + firstPos + 1] & 0xF);
+        firstPos++;
     }
+
+    frame->IDE = CAN_IDE_STD;
+    frame->RTR = CAN_RTR_DATA;
+
+    return true;
 }
 
 static THD_WORKING_AREA(waUsbRxThread, 1024);
@@ -463,25 +476,24 @@ void UsbRxThread(void *)
                     // Null terminate and process the command
                     rxBuf[rxIndex] = '\0';
 
-                    if (rxIndex > 0)
+                    if (rxIndex > 0 && Parse(rxBuf, rxIndex, &msg))
                     {
-                        Parse(rxBuf, rxIndex, &msg);
                         PostRxFrame(&msg);
-                    }
 
-                    if(stConfig.stDevice.bConnectUsbToCan)
-                    {
-                        //Copy data to CAN for data pass through
-                        //Don't send if it's a settings msg for this device
-                        if( (msg.SID != stConfig.stDevice.nBaseId + CONFIG_RX_OFFSET) && 
-                            (msg.SID != stConfig.stDevice.nBaseId + CONFIG_TX_OFFSET)) 
+                        if(stConfig.stDevice.bConnectUsbToCan)
                         {
-                            canTx.SID = msg.SID;
-                            canTx.IDE = msg.IDE;
-                            canTx.DLC = msg.DLC;
-                            for(size_t i = 0; i < msg.DLC; i++)
-                                canTx.data8[i] = msg.data8[i];
-                            PostTxFrame(&canTx);
+                            //Copy data to CAN for data pass through
+                            //Don't send if it's a settings msg for this device
+                            if( (msg.SID != stConfig.stDevice.nBaseId + CONFIG_RX_OFFSET) &&
+                                (msg.SID != stConfig.stDevice.nBaseId + CONFIG_TX_OFFSET))
+                            {
+                                canTx.SID = msg.SID;
+                                canTx.IDE = msg.IDE;
+                                canTx.DLC = msg.DLC;
+                                for(size_t i = 0; i < msg.DLC; i++)
+                                    canTx.data8[i] = msg.data8[i];
+                                PostTxFrame(&canTx);
+                            }
                         }
                     }
                     

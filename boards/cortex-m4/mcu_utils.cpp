@@ -18,8 +18,10 @@ void EnterStopMode()
 
  void RequestBootloader()
 {
-    // Set the magic code
-    *((unsigned long *)0x2001FFF0) = 0xDEADBEEF; // End of RAM
+    // Set the magic code. volatile because enter_bootloader.S is the only
+    // reader - without it the store has no reachable read the compiler can
+    // see, so it's a legal target for dead-store elimination.
+    *((volatile unsigned long *)0x2001FFF0) = 0xDEADBEEF; // End of RAM
 
     // Reset the microcontroller to start the bootloader on next boot
     // See enter_bootloader.S, which overrides the reset handler

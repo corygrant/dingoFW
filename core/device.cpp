@@ -53,17 +53,21 @@ Starter starter;
 Keypad keypad[NUM_KEYPADS];
 #endif
 
-DeviceState eState = DeviceState::Run;
+volatile DeviceState eState = DeviceState::Run;
 float fState; //For var map
 FatalErrorType eError = FatalErrorType::NoError;
 DeviceConfig stConfig;
 DeviceConfig stConfigTemp; // Used for staging new config before applying
 float *pVarMap[VAR_MAP_SIZE];
 
+// fBattVolt/fTempSensor stay plain float (aliased into pVarMap[], which is
+// float* and read throughout the codebase for same-thread lookups) - their
+// one cross-thread reader, GetBoardTemp() in core/status.cpp, does its own
+// volatile read instead.
 float fBattVolt;
 float fTempSensor;
-bool bDeviceOverTemp;
-bool bDeviceCriticalTemp;
+volatile bool bDeviceOverTemp;
+volatile bool bDeviceCriticalTemp;
 bool bSleepRequest;
 bool bBootloaderRequest;
 

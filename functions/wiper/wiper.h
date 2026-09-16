@@ -113,7 +113,9 @@ private:
 
     Config_Wiper *pConfig;
 
-    WiperState eState;
+    // Read by CanCyclicTxThread via GetState() while DeviceThread's Update()
+    // is the writer.
+    volatile WiperState eState;
 
     float *pParkSw;
     float *pSwipeInput;
@@ -129,7 +131,8 @@ private:
 
     // IntIn Mode
     float *pSpeedInput;
-    WiperSpeed eSelectedSpeed;
+    // Read by CanCyclicTxThread via GetSpeed().
+    volatile WiperSpeed eSelectedSpeed;
 
     // MixIn Mode
     float *pOnSw;

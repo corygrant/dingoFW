@@ -69,7 +69,7 @@ const CANConfig &GetCanConfig(CanBitrate bitrate)
     return canConfig500;
 }
 
-adcsample_t adc1_samples[ADC1_NUM_CHANNELS] = {0};
+volatile adcsample_t adc1_samples[ADC1_NUM_CHANNELS] = {0};
 // 0 = OutIS1 - ADC1_IN13
 // 1 = OutIS2 - ADC1_IN12
 // 2 = OutIS3 - ADC1_IN0
@@ -118,7 +118,7 @@ msg_t InitAdc()
 
     adcSTM32EnableTSVREFE(); // Enable temp sensor and vref
 
-    adcStartConversion(&ADCD1, &adc1_cfg, adc1_samples, ADC1_BUF_DEPTH);
+    adcStartConversion(&ADCD1, &adc1_cfg, const_cast<adcsample_t*>(adc1_samples), ADC1_BUF_DEPTH);
 
     return HAL_RET_SUCCESS;
 }

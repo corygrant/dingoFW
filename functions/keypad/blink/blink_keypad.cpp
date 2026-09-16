@@ -30,15 +30,18 @@ uint64_t BuildLedMsg(Keypad* kp, bool bBlink)
         uint8_t nIndex = 0;
         for (uint8_t i = 0; i < kp->nNumButtons; i++)
         {
-            nMsg |= (ColorToRed(bBlink ? kp->button[i].eLedBlinkColor : kp->button[i].eLedOnColor) << nIndex++);
+            if (nIndex >= 64) break;
+            nMsg |= (static_cast<uint64_t>(ColorToRed(bBlink ? kp->button[i].eLedBlinkColor : kp->button[i].eLedOnColor)) << nIndex++);
         }
         for (uint8_t i = 0; i < kp->nNumButtons; i++)
         {
-            nMsg |= (ColorToGreen(bBlink ? kp->button[i].eLedBlinkColor : kp->button[i].eLedOnColor) << nIndex++);
+            if (nIndex >= 64) break;
+            nMsg |= (static_cast<uint64_t>(ColorToGreen(bBlink ? kp->button[i].eLedBlinkColor : kp->button[i].eLedOnColor)) << nIndex++);
         }
         for (uint8_t i = 0; i < kp->nNumButtons; i++)
         {
-            nMsg |= (ColorToBlue(bBlink ? kp->button[i].eLedBlinkColor : kp->button[i].eLedOnColor) << nIndex++);
+            if (nIndex >= 64) break;
+            nMsg |= (static_cast<uint64_t>(ColorToBlue(bBlink ? kp->button[i].eLedBlinkColor : kp->button[i].eLedOnColor)) << nIndex++);
         }
 
         return nMsg;
@@ -55,21 +58,24 @@ uint64_t BuildLedMsg(Keypad* kp, bool bBlink)
         nByteIndex = i / 8;
         nBitIndex = i % 8;
         nBitPosition = (nByteIndex * 8) + nBitIndex;
-        nMsg |= (ColorToRed(bBlink ? kp->button[i].eLedBlinkColor : kp->button[i].eLedOnColor) << nBitPosition);
+        if (nBitPosition >= 64) break;
+        nMsg |= (static_cast<uint64_t>(ColorToRed(bBlink ? kp->button[i].eLedBlinkColor : kp->button[i].eLedOnColor)) << nBitPosition);
     }
 
     for (uint8_t i = 0; i < kp->nNumButtons; i++) {
         nByteIndex = nBytesPerColor + (i / 8);
         nBitIndex = i % 8;
         nBitPosition = (nByteIndex * 8) + nBitIndex;
-        nMsg |= (ColorToGreen(bBlink ? kp->button[i].eLedBlinkColor : kp->button[i].eLedOnColor) << nBitPosition);
+        if (nBitPosition >= 64) break;
+        nMsg |= (static_cast<uint64_t>(ColorToGreen(bBlink ? kp->button[i].eLedBlinkColor : kp->button[i].eLedOnColor)) << nBitPosition);
     }
 
     for (uint8_t i = 0; i < kp->nNumButtons; i++) {
         nByteIndex = 2 * nBytesPerColor + (i / 8);
         nBitIndex = i % 8;
         nBitPosition = (nByteIndex * 8) + nBitIndex;
-        nMsg |= (ColorToBlue(bBlink ? kp->button[i].eLedBlinkColor : kp->button[i].eLedOnColor) << nBitPosition);
+        if (nBitPosition >= 64) break;
+        nMsg |= (static_cast<uint64_t>(ColorToBlue(bBlink ? kp->button[i].eLedBlinkColor : kp->button[i].eLedOnColor)) << nBitPosition);
     }
 
     return nMsg;
@@ -103,7 +109,7 @@ CANTxFrame LedBrightnessMsg(Keypad* kp)
     msg.SID = kp->pConfig->nNodeId + 0x400;
     msg.IDE = CAN_IDE_STD;
     msg.DLC = 8;
-    msg.data8[0] = *kp->pDimmingInput ? kp->pConfig->nDimButtonBrightness : kp->pConfig->nButtonBrightness;
+    msg.data8[0] = *const_cast<volatile float*>(kp->pDimmingInput) ? kp->pConfig->nDimButtonBrightness : kp->pConfig->nButtonBrightness;
     msg.data8[1] = 0x00;
     msg.data8[2] = 0x00;
     msg.data8[3] = 0x00;
@@ -121,7 +127,7 @@ CANTxFrame BacklightMsg(Keypad* kp)
     msg.SID = kp->pConfig->nNodeId + 0x500;
     msg.IDE = CAN_IDE_STD;
     msg.DLC = 8;
-    msg.data8[0] = *kp->pDimmingInput ? kp->pConfig->nDimBacklightBrightness : kp->pConfig->nBacklightBrightness;
+    msg.data8[0] = *const_cast<volatile float*>(kp->pDimmingInput) ? kp->pConfig->nDimBacklightBrightness : kp->pConfig->nBacklightBrightness;
     msg.data8[1] = kp->pConfig->nBacklightColor;
     msg.data8[2] = 0x00;
     msg.data8[3] = 0x00;

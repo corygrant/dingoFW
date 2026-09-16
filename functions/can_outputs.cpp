@@ -113,6 +113,7 @@ uint8_t CanOutputs::CalcDlc(uint8_t nStartBit, uint8_t nBitLength)
 {
     uint8_t nLastBit  = nStartBit + nBitLength - 1;
     uint8_t nEndByte  = nLastBit / 8;
+    uint8_t nDlc      = nEndByte + 1;
 
-    return (nEndByte + 1);
+    return (nDlc > 8) ? 8 : nDlc; // Classic CAN frames are at most 8 bytes
 }

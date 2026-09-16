@@ -94,13 +94,17 @@ void Keypad::CheckTimeout()
 
     if (SYS_TIME - nLastRxTime > pConfig->nTimeout)
     {
-        // Timeout - reset values
+        // Timeout - reset values. fButtonVal/fDialVal/fAnalogVal are sized
+        // KEYPAD_MAX_BUTTONS/_DIALS/_ANALOG_INPUTS respectively (not all
+        // equal - see keypad.h) so each needs its own loop bound; a single
+        // shared KEYPAD_MAX_BUTTONS-length loop wrote past the end of the
+        // two smaller arrays.
         for (uint8_t i = 0; i < KEYPAD_MAX_BUTTONS; i++)
-        {
             fButtonVal[i] = 0;
+        for (uint8_t i = 0; i < KEYPAD_MAX_DIALS; i++)
             fDialVal[i] = 0;
+        for (uint8_t i = 0; i < KEYPAD_MAX_ANALOG_INPUTS; i++)
             fAnalogVal[i] = 0;
-        }
     }
 }
 

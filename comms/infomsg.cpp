@@ -25,7 +25,7 @@ static InfoMsg OutputFaultMsg[NUM_OUTPUTS];
 #endif
 
 extern DeviceConfig stConfig;
-extern DeviceState eState;
+// eState is declared (volatile) in device.h, already included above.
 
 #if HAS_BATT_VOLT_SENSE
 extern float fBattVolt;

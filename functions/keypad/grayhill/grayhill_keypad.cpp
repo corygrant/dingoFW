@@ -47,8 +47,8 @@ CANTxFrame BrightnessMsg(Keypad* kp)
     msg.SID = kp->pConfig->nNodeId + 0x300;
     msg.IDE = CAN_IDE_STD;
     msg.DLC = 8;
-    msg.data8[0] = *kp->pDimmingInput ? kp->pConfig->nDimButtonBrightness : kp->pConfig->nButtonBrightness;
-    msg.data8[1] = *kp->pDimmingInput ? kp->pConfig->nDimBacklightBrightness : kp->pConfig->nBacklightBrightness;
+    msg.data8[0] = *const_cast<volatile float*>(kp->pDimmingInput) ? kp->pConfig->nDimButtonBrightness : kp->pConfig->nButtonBrightness;
+    msg.data8[1] = *const_cast<volatile float*>(kp->pDimmingInput) ? kp->pConfig->nDimBacklightBrightness : kp->pConfig->nBacklightBrightness;
     msg.data8[2] = 0x00;
     msg.data8[3] = 0x00;
     msg.data8[4] = 0x00;

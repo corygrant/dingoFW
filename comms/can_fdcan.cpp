@@ -33,7 +33,8 @@ static uint32_t nStdFilterIds[NUM_CAN_BUSES][FDCAN_MAX_STD_FILTERS * 2];
 static uint32_t nExtFilterIds[NUM_CAN_BUSES][FDCAN_MAX_EXT_FILTERS * 2];
 static CANFilter canFilters[NUM_CAN_BUSES][FDCAN_MAX_STD_FILTERS + FDCAN_MAX_EXT_FILTERS];
 
-static uint32_t nLastCanRxTime;
+// Written by CanRxThread, read by DeviceThread via GetLastCanRxTime().
+static volatile uint32_t nLastCanRxTime;
 static bool bCanFilterEnabled[NUM_CAN_BUSES];
 
 static void ConfigureCanFilters(uint8_t nBus);
