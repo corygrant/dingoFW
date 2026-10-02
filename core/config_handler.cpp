@@ -197,7 +197,8 @@ void ApplyConfig(uint16_t nIndex)
     #endif
 
     #if NUM_KEYPADS > 0
-    if (nBaseIndex == Keypad::nBaseIndex)
+    // Keypad (0x30xx), buttons (0x31xx) and dials (0x32xx) are all applied through Keypad::SetConfig
+    if ((nBaseIndex & 0xF000) == Keypad::nBaseIndex)
     {
         for (uint8_t i = 0; i < NUM_KEYPADS; i++)
             keypad[i].SetConfig(&stConfig.stKeypad[i]);
