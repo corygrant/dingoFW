@@ -39,27 +39,42 @@ void Pwm::Update()
 
 uint8_t Pwm::GetTargetDutyCycle() {
     if (pConfig->bVariableDutyCycle && pConfig->nDutyCycleInputDenom > 0) {
-        uint8_t dc = (uint8_t)((*pInput) / pConfig->nDutyCycleInputDenom);
-        if (dc < pConfig->nMinDutyCycle)
-            dc = pConfig->nMinDutyCycle;
-        return dc;
+        // Clamp duty cycle to 100% and minimum duty cycle
+        float fDc = (*pInput) / pConfig->nDutyCycleInputDenom;
+        if (fDc > 100.0f)
+            fDc = 100.0f;
+        if (!(fDc >= pConfig->nMinDutyCycle))
+            fDc = pConfig->nMinDutyCycle;
+        return (uint8_t)fDc;
     }
     return pConfig->nFixedDutyCycle;
 }
 
 void Pwm::InitSoftStart() {
+    nSoftStartTime = SYS_TIME;
+
+    // No ramp time configured - go straight to target instead of dividing by zero
+    if (pConfig->nSoftStartRampTime == 0) {
+        nDutyCycle = GetTargetDutyCycle();
+        bSoftStartComplete = true;
+        return;
+    }
+
     fSoftStartStep = GetTargetDutyCycle() / (float)pConfig->nSoftStartRampTime;
     bSoftStartComplete = false;
-    nSoftStartTime = SYS_TIME;
 }
 
 void Pwm::UpdateSoftStart() {
     uint8_t targetDuty = GetTargetDutyCycle();
-    nDutyCycle = (uint8_t)((fSoftStartStep * (SYS_TIME - nSoftStartTime)) + pConfig->nMinDutyCycle);
-    
-    if (nDutyCycle >= targetDuty) {
+    // Compare in float - the ramp can overshoot 255 in one step on short ramps
+    float fDuty = (fSoftStartStep * (SYS_TIME - nSoftStartTime)) + pConfig->nMinDutyCycle;
+
+    if (fDuty >= targetDuty) {
         nDutyCycle = targetDuty;
         bSoftStartComplete = true;
+    }
+    else {
+        nDutyCycle = (uint8_t)fDuty;
     }
 }
 
