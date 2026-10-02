@@ -3,6 +3,7 @@
 #include "config.h"
 #include "mailbox.h"
 #include "config_handler.h"
+#include "request_msg.h"
 #include "crc.h"
 #include <cstring>
 
@@ -139,6 +140,13 @@ void ApplyTempParams() {
     }
 }
 
+static void ApplyLiveConfig() {
+    LockConfig();
+    ApplyTempParams();
+    ApplyAllConfig();
+    UnlockConfig();
+}
+
 static bool bLastWriteWasModified = false;
 
 #define MAX_WRITE_ALL_MISSING_REPORTED 16
@@ -172,19 +180,17 @@ static void SendWriteAllMissingList(bool bForceOverflow) {
     PostTxFrameWithRetry(&tx);
 }
 
-MsgCmd ProcessParamMsg(CANRxFrame *rx, uint16_t *nIndex) {
+static void ProcessParamMsg(CANRxFrame *rx) {
     CANTxFrame tx;
     ParamMsg msg;
 
     if (rx->SID != stConfig.stDevice.nBaseId + CONFIG_RX_OFFSET)
-        return MsgCmd::Invalid;
+        return;
 
     if (rx->DLC != 8)
-        return MsgCmd::Invalid;
+        return;
 
     DecodeParamCmd(rx, &msg);
-
-    *nIndex = msg.nIndex;
 
     switch(msg.eCmd) {
         case MsgCmd::Read: {
@@ -202,7 +208,16 @@ MsgCmd ProcessParamMsg(CANRxFrame *rx, uint16_t *nIndex) {
 
         case MsgCmd::Write: {
             const ParamInfo* param = FindParam(msg.nIndex, msg.nSubIndex);
-            if (param && WriteParam(param, msg.nValue)) {
+            if (!param)
+                break;
+
+            LockConfig();
+            bool bWritten = WriteParam(param, msg.nValue);
+            if (bWritten)
+                ApplyConfig(msg.nIndex);
+            UnlockConfig();
+
+            if (bWritten) {
                 uint32_t value = ReadParam(param);
                 EncodeParamRsp(&tx, static_cast<uint8_t>(MsgCmd::Write), msg.nIndex, msg.nSubIndex, value);
                 PostTxFrameWithRetry(&tx);
@@ -269,7 +284,7 @@ MsgCmd ProcessParamMsg(CANRxFrame *rx, uint16_t *nIndex) {
                 nWriteCrc = ~nWriteCrc; // Finalize CRC of what we actually received
                 bApplied = (nNumWriteParams == nExpectedParams && nWriteCrc == nExpectedCrc) ? 1 : 0;
                 if (bApplied) {
-                    ApplyTempParams();
+                    ApplyLiveConfig();
                 }
                 nReportedCount = nNumWriteParams;
                 nReportedCrc = nWriteCrc;
@@ -279,7 +294,7 @@ MsgCmd ProcessParamMsg(CANRxFrame *rx, uint16_t *nIndex) {
                 uint32_t nCrc = (nReceived == nExpectedParams) ? CalcParamsCrc(true) : 0;
                 bApplied = (nReceived == nExpectedParams && nCrc == nExpectedCrc) ? 1 : 0;
                 if (bApplied) {
-                    ApplyTempParams();
+                    ApplyLiveConfig();
                 } else {
                     bNeedsMissingList = true;
                     bCrcMismatchOnFullCount = (nReceived == nExpectedParams); // nothing to enumerate
@@ -306,6 +321,50 @@ MsgCmd ProcessParamMsg(CANRxFrame *rx, uint16_t *nIndex) {
         default:
             break;
     }
+}
 
-    return msg.eCmd;
+static CANRxFrame paramFrames[MAILBOX_SIZE];
+static msg_t paramMsgs[MAILBOX_SIZE];
+static objects_fifo_t paramFifo;
+
+bool RouteParamFrame(CANRxFrame *frame)
+{
+    if ((frame->IDE != CAN_IDE_STD) ||
+        (frame->SID != stConfig.stDevice.nBaseId + CONFIG_RX_OFFSET))
+        return false;
+
+    CANRxFrame *pFrame = static_cast<CANRxFrame*>(chFifoTakeObjectTimeout(&paramFifo, TIME_IMMEDIATE));
+    if (pFrame == nullptr)
+        return true; // Queue full, drop - host retries on CRC/count mismatch
+
+    *pFrame = *frame;
+    chFifoSendObject(&paramFifo, pFrame);
+    return true;
+}
+
+static THD_WORKING_AREA(waParamThread, DEVICE_THREAD_STACK);
+static void ParamThread(void *)
+{
+    chRegSetThreadName("Param");
+
+    while (true)
+    {
+        CANRxFrame *pFrame;
+        if (chFifoReceiveObjectTimeout(&paramFifo, reinterpret_cast<void**>(&pFrame), TIME_INFINITE) != MSG_OK)
+            continue;
+
+        CANRxFrame frame = *pFrame;
+        chFifoReturnObject(&paramFifo, pFrame);
+
+        CheckRequestMsgs(&frame);
+        ProcessParamMsg(&frame);
+    }
+}
+
+void InitParamThread()
+{
+    chFifoObjectInit(&paramFifo, sizeof(CANRxFrame), MAILBOX_SIZE, paramFrames, paramMsgs);
+
+    // Priority below DeviceThread
+    chThdCreateStatic(waParamThread, sizeof(waParamThread), NORMALPRIO - 1, ParamThread, nullptr);
 }

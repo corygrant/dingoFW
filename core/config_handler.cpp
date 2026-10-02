@@ -59,6 +59,18 @@ extern Digital_Output digOut[NUM_DIG_OUTPUTS];
 extern Analog_Input analogIn[NUM_ANALOG_INPUTS];
 #endif
 
+static MUTEX_DECL(configMutex);
+
+void LockConfig()
+{
+    chMtxLock(&configMutex);
+}
+
+void UnlockConfig()
+{
+    chMtxUnlock(&configMutex);
+}
+
 void ApplyAllConfig()
 {
     ApplyConfig(CanInput::nBaseIndex);

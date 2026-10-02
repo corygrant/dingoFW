@@ -80,8 +80,10 @@ struct DeviceThread : chibios_rt::BaseStaticThread<DEVICE_THREAD_STACK>
 
         while (true)
         {
+            LockConfig();
             CyclicUpdate();
             States();
+            UnlockConfig();
             chThdSleepMilliseconds(2);
         }
     }
@@ -133,6 +135,8 @@ void InitDevice()
     InitConfig();
 
     ApplyAllConfig();
+
+    InitParamThread();
 
     if(!InitAdc() == HAL_RET_SUCCESS)
         Error::SetFatalError(FatalErrorType::ErrADC, MsgSrc::Init);
@@ -269,19 +273,6 @@ void CyclicUpdate()
             for (uint8_t i = 0; i < NUM_KEYPADS; i++)
                 keypad[i].CheckMsg(rxMsg);
             #endif
-
-            CheckRequestMsgs(&rxMsg);
-            
-            uint16_t nIndex = 0;
-            MsgCmd cmd = ProcessParamMsg(&rxMsg, &nIndex);
-            if (cmd == MsgCmd::WriteAllComplete)
-            {
-                ApplyAllConfig();
-            }
-            if (cmd == MsgCmd::Write)
-            {
-                ApplyConfig(nIndex & 0xFF00); // Mask instance, only base index is needed
-            }
         }
     }
 

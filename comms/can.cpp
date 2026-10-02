@@ -91,12 +91,14 @@ void CanRxThread(void *)
     while (true)
     {
 
-        msg_t res = canReceiveTimeout(&CAND1, CAN_ANY_MAILBOX, &msg, TIME_IMMEDIATE);
+        msg_t res = canReceiveTimeout(&CAND1, CAN_ANY_MAILBOX, &msg, TIME_MS2I(100));
         if (res == MSG_OK)
         {
             nLastCanRxTime = SYS_TIME;
 
-            res = PostRxFrame(&msg);
+            // Config frames go straight to the param thread
+            if (!RouteParamFrame(&msg))
+                res = PostRxFrame(&msg);
 
             if(stConfig.stDevice.bConnectUsbToCan)
             {
@@ -118,8 +120,6 @@ void CanRxThread(void *)
 
         if (chThdShouldTerminateX())
             chThdExit(MSG_OK);
-
-        chThdSleepMicroseconds(30);
     }
 }
 

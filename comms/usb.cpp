@@ -5,6 +5,7 @@
 #include "mailbox.h"
 #include "msg.h"
 #include "config.h"
+#include "param_protocol.h"
 
 #if HAS_USB
 
@@ -476,7 +477,9 @@ void UsbRxThread(void *)
 
                     if (rxIndex > 0 && Parse(rxBuf, rxIndex, &msg))
                     {
-                        PostRxFrame(&msg);
+                        // Config frames go straight to the param thread
+                        if (!RouteParamFrame(&msg))
+                            PostRxFrame(&msg);
 
                         if(stConfig.stDevice.bConnectUsbToCan)
                         {

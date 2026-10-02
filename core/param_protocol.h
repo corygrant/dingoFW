@@ -11,11 +11,8 @@ struct ParamMsg
     uint32_t nValue;
 };
 
-MsgCmd ProcessParamMsg(CANRxFrame *rx, uint16_t *nIndex);
+void InitParamThread();
+bool RouteParamFrame(CANRxFrame *frame);
 void SetAllDefaultParams(bool temp = false);
 
-// True while a ReadAll/WriteAll bulk transfer is in progress; cyclic TX should
-// pause during this window to avoid contending with the transfer on a busy bus.
-// Self-clears after PARAM_OP_MAX_DURATION_MS so an abandoned transfer can't
-// permanently starve cyclic messages.
 bool IsParamOpInProgress();
