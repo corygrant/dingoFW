@@ -40,7 +40,7 @@ void Condition::Update()
             break;
 
         case Operator::BitwiseNand:
-            fVal = ~((uint16_t)(*pInput) & (uint16_t)(pConfig->fArg));
+            fVal = !((uint16_t)(*pInput) & (uint16_t)(pConfig->fArg));
             break;
 
         default:
