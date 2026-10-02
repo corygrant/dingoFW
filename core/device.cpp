@@ -276,19 +276,12 @@ void CyclicUpdate()
         }
     }
 
-    #if NUM_OUTPUTS > 0
-    for (uint8_t i = 0; i < NUM_OUTPUTS; i++)
-        pf[i].Update(starter.fVal[i]);
-    #endif
-
+    //=========================================================================
+    // Inputs, then logic, then outputs
+    //=========================================================================
     #if NUM_DIG_INPUTS > 0
     for (uint8_t i = 0; i < NUM_DIG_INPUTS; i++)
         digIn[i].Update();
-    #endif
-
-    #if NUM_DIG_OUTPUTS > 0
-    for (uint8_t i = 0; i < NUM_DIG_OUTPUTS; i++)
-        digOut[i].Update();
     #endif
 
     #if NUM_ANALOG_INPUTS > 0
@@ -299,10 +292,6 @@ void CyclicUpdate()
     #if NUM_CAN_INPUTS > 0
     for (uint8_t i = 0; i < NUM_CAN_INPUTS; i++)
         canIn[i].CheckTimeout();
-    #endif
-
-    #if NUM_CAN_OUTPUTS > 0
-    canOutputs.Update();
     #endif
 
     #if NUM_VIRT_INPUTS > 0
@@ -336,6 +325,23 @@ void CyclicUpdate()
     #if NUM_KEYPADS > 0
     for (uint8_t i = 0; i < NUM_KEYPADS; i++)
         keypad[i].Update();
+    #endif
+
+    //=========================================================================
+    // Outputs last, so they act on this cycle's inputs and logic
+    //=========================================================================
+    #if NUM_OUTPUTS > 0
+    for (uint8_t i = 0; i < NUM_OUTPUTS; i++)
+        pf[i].Update(starter.fVal[i]);
+    #endif
+
+    #if NUM_DIG_OUTPUTS > 0
+    for (uint8_t i = 0; i < NUM_DIG_OUTPUTS; i++)
+        digOut[i].Update();
+    #endif
+
+    #if NUM_CAN_OUTPUTS > 0
+    canOutputs.Update();
     #endif
 
     #if HAS_NEOPIXELS
