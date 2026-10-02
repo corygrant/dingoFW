@@ -53,15 +53,10 @@ msg_t FetchTxFrame(CANTxFrame *frame)
     CANTxFrame *txFrame;
     msg_t result = txMb.fetch(&txFrame, TIME_IMMEDIATE);
     if (result == MSG_OK) {
+        *frame = *txFrame; // Copy before freeing the slot so a producer can't overwrite it
         txMutex.lock();
-        for (int i = 0; i < MAILBOX_SIZE; i++) {
-            if (txFrame == &txFrames[i]) {
-                txMsgUsed[i] = false;
-                break;
-            }
-        }
+        txMsgUsed[txFrame - txFrames] = false;
         txMutex.unlock();
-        *frame = *txFrame;
     }
     return result;
 }
@@ -91,15 +86,10 @@ msg_t FetchTxUsbFrame(CANTxFrame *frame)
     CANTxFrame *txFrame;
     msg_t result = txUsbMb.fetch(&txFrame, TIME_IMMEDIATE);
     if (result == MSG_OK) {
+        *frame = *txFrame; // Copy before freeing the slot so a producer can't overwrite it
         txUsbMutex.lock();
-        for (int i = 0; i < MAILBOX_SIZE; i++) {
-            if (txFrame == &txUsbFrames[i]) {
-                txUsbMsgUsed[i] = false;
-                break;
-            }
-        }
+        txUsbMsgUsed[txFrame - txUsbFrames] = false;
         txUsbMutex.unlock();
-        *frame = *txFrame;
     }
     return result;
 }
@@ -129,15 +119,10 @@ msg_t FetchRxFrame(CANRxFrame *frame)
     CANRxFrame *rxFrame;
     msg_t result = rxMb.fetch(&rxFrame, TIME_IMMEDIATE);
     if (result == MSG_OK) {
+        *frame = *rxFrame; // Copy before freeing the slot so a producer can't overwrite it
         rxMutex.lock();
-        for (int i = 0; i < MAILBOX_SIZE; i++) {
-            if (rxFrame == &rxFrames[i]) {
-                rxMsgUsed[i] = false;
-                break;
-            }
-        }
+        rxMsgUsed[rxFrame - rxFrames] = false;
         rxMutex.unlock();
-        *frame = *rxFrame;
     }
     return result;
 }
