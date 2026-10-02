@@ -88,39 +88,40 @@ bool MB85RC::Read(uint16_t nMemAddr, uint8_t *pData, uint16_t nByteLen)
 
 bool MB85RC::Write(uint16_t nMemAddr, uint8_t *nMemVals, uint16_t nByteLen)
 {   
-    msg_t status;
-    uint16_t totalSize = 2 + nByteLen;
-    
-    // Allocate memory dynamically
-    uint8_t *txData = (uint8_t*)chHeapAlloc(NULL, totalSize);
-    if (txData == NULL) {
-        return false; // Allocation failed
-    }
-
-    // Set up address bytes (MSB first, LSB second)
-    txData[0] = static_cast<uint8_t>(nMemAddr >> 8);
-    txData[1] = static_cast<uint8_t>(nMemAddr & 0xFF);
-
-    // Copy data
-    for (uint16_t i = 0; i < nByteLen; i++)
-    {
-        txData[2 + i] = nMemVals[i];
-    }
+    // Write in chunks from a stack buffer instead of allocating the whole size on the heap.
+    // FRAM has no pages, each chunk is its own transaction starting at its own address.
+    uint8_t txData[2 + MB85RC_WRITE_CHUNK];
+    msg_t status = MSG_OK;
 
     i2cAcquireBus(m_driver);
 
-    status = i2cMasterTransmitTimeout(m_driver,
-                                    m_addr,
-                                    txData,
-                                    totalSize,
-                                    NULL,
-                                    0,
-                                    TIME_MS2I(MB85RC_TIMEOUT));
+    while (nByteLen > 0)
+    {
+        uint16_t nChunk = (nByteLen > MB85RC_WRITE_CHUNK) ? MB85RC_WRITE_CHUNK : nByteLen;
+
+        // Address bytes (MSB first, LSB second)
+        txData[0] = static_cast<uint8_t>(nMemAddr >> 8);
+        txData[1] = static_cast<uint8_t>(nMemAddr & 0xFF);
+
+        for (uint16_t i = 0; i < nChunk; i++)
+            txData[2 + i] = nMemVals[i];
+
+        status = i2cMasterTransmitTimeout(m_driver,
+                                          m_addr,
+                                          txData,
+                                          2 + nChunk,
+                                          NULL,
+                                          0,
+                                          TIME_MS2I(MB85RC_TIMEOUT));
+        if (status != MSG_OK)
+            break;
+
+        nMemAddr += nChunk;
+        nMemVals += nChunk;
+        nByteLen -= nChunk;
+    }
 
     i2cReleaseBus(m_driver);
-
-    // Free the allocated memory
-    chHeapFree(txData);
 
     if (status != MSG_OK) {
        lastErrors = i2cGetErrors(&I2CD1);
