@@ -48,7 +48,7 @@ void Profet::Update(bool bOutEnabled)
     if (pFollower != nullptr && pFollower->eState == ProfetState::Fault)
         eState = ProfetState::Fault;
 
-    bInRushActive = (pConfig->nInrushTime + nInRushOnTime) > SYS_TIME;
+    bInRushActive = (SYS_TIME - nInRushOnTime) < pConfig->nInrushTime;
 
     switch (eState)
     {
@@ -116,7 +116,7 @@ void Profet::Update(bool bOutEnabled)
 
         // Overcurrent reset time exceeded
         // ResetEndless or ResetCount
-        if ((pConfig->nResetTime + nOcTriggerTime) < SYS_TIME)
+        if ((SYS_TIME - nOcTriggerTime) > pConfig->nResetTime)
         {
             nInRushOnTime = SYS_TIME;
             eState = ProfetState::On;

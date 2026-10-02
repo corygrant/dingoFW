@@ -1,5 +1,11 @@
 #include "led.h"
 
+// Wrap-safe deadline check: true once SYS_TIME is past nDeadline
+static inline bool TimeReached(uint32_t nDeadline)
+{
+    return static_cast<int32_t>(SYS_TIME - nDeadline) > 0;
+}
+
 void Led::Solid(bool bOn)
 {
     if(bOn)
@@ -18,7 +24,7 @@ void Led::Code(uint8_t nCode)
       if (nBlinkCount <= nCode){
 
         //This blink done
-        if(SYS_TIME > nUntil){
+        if(TimeReached(nUntil)){
           //On, turn off
           if(bState){
             Led::Solid(false);
@@ -44,7 +50,7 @@ void Led::Code(uint8_t nCode)
       Led::Solid(true);
 
       //Done pausing, back to blinking
-      if (SYS_TIME > nUntil){
+      if (TimeReached(nUntil)){
         nBlinkState = 0;
       }
     }
@@ -52,7 +58,7 @@ void Led::Code(uint8_t nCode)
 
 void Led::Blink(){
 
-    if(SYS_TIME > nUntil){
+    if(TimeReached(nUntil)){
       if(bState){
         Solid(false);
         nUntil = SYS_TIME + LED_BLINK_SPLIT;

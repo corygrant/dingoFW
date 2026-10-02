@@ -78,7 +78,9 @@
 
 #define SLEEP_TIMEOUT 30000
 
-#define SYS_TIME TIME_I2MS(chVTGetSystemTimeX())
+// Milliseconds from the 64-bit timestamp, truncated to 32 bits so it wraps cleanly
+// every ~49.7 days. Always compare as (SYS_TIME - start), never as absolute times.
+#define SYS_TIME ((uint32_t)(chVTGetTimeStamp() / (CH_CFG_ST_FREQUENCY / 1000)))
 
 static const float ALWAYS_FALSE = 0.0f;
 static const float ALWAYS_TRUE = 1.0f;
