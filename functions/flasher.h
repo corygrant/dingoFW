@@ -39,4 +39,5 @@ private:
 
     uint32_t nTimeOff;
     uint32_t nTimeOn;
+    bool bCycleDone; // Single cycle: flash completed for the current input activation
 };
