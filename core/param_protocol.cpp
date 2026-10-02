@@ -60,10 +60,10 @@ msg_t PostTxFrameWithRetry(CANTxFrame *tx) {
     return ret;
 }
 
-// Set while a ReadAll/WriteAll bulk transfer is in progress so cyclic TX can pause.
+// Set while a ReadAll/WriteAll transfer is in progress so cyclic TX can pause.
 volatile bool g_bParamOpInProgress = false;
 static volatile uint32_t nParamOpStartTime = 0;
-#define PARAM_OP_MAX_DURATION_MS 4000 // safety valve: never pause cyclic TX longer than this
+#define PARAM_OP_MAX_DURATION_MS 4000 // never pause cyclic TX longer than this
 
 static void SetParamOpInProgress(bool bInProgress) {
     g_bParamOpInProgress = bInProgress;
@@ -71,14 +71,14 @@ static void SetParamOpInProgress(bool bInProgress) {
         nParamOpStartTime = SYS_TIME;
 }
 
-bool IsCyclicTxPaused() {
+bool IsParamOpInProgress() {
     if (!g_bParamOpInProgress)
         return false;
 
-    //if (SYS_TIME - nParamOpStartTime > PARAM_OP_MAX_DURATION_MS) {
-    //    g_bParamOpInProgress = false; // stale op (e.g. host abandoned a WriteAll mid-stream)
-    //    return false;
-    //}
+    if (SYS_TIME - nParamOpStartTime > PARAM_OP_MAX_DURATION_MS) {
+        g_bParamOpInProgress = false; // stale
+        return false;
+    }
 
     return true;
 }

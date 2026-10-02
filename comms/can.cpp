@@ -15,6 +15,8 @@ static bool bFilterExtended[STM32_CAN_MAX_FILTERS * 2];
 static uint32_t nLastCanRxTime;
 static bool bCanFilterEnabled = true;
 
+extern float fMuteCanTx;
+
 void ConfigureCanFilters();
 
 static THD_WORKING_AREA(waCanCyclicTxThread, 128);
@@ -27,7 +29,7 @@ void CanCyclicTxThread(void *)
     while (1)
     {
 
-        if (!IsCyclicTxPaused())
+        if (!IsParamOpInProgress() && !fMuteCanTx)
         {
             for (uint8_t i = 0; i < NUM_TX_MSGS; i++)
             {

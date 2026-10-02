@@ -18,4 +18,4 @@ void SetAllDefaultParams(bool temp = false);
 // pause during this window to avoid contending with the transfer on a busy bus.
 // Self-clears after PARAM_OP_MAX_DURATION_MS so an abandoned transfer can't
 // permanently starve cyclic messages.
-bool IsCyclicTxPaused();
+bool IsParamOpInProgress();

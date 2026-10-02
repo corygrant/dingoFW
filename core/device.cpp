@@ -62,9 +62,10 @@ float *pVarMap[VAR_MAP_SIZE];
 
 float fBattVolt;
 float fTempSensor;
+float fMuteCanTx;
+float fForceSleep;
 bool bDeviceOverTemp;
 bool bDeviceCriticalTemp;
-bool bSleepRequest;
 bool bBootloaderRequest;
 
 void InitVarMap();
@@ -230,8 +231,6 @@ void States()
 
     if (eState == DeviceState::Sleep)
     {
-        bSleepRequest = false;
-        palSetLine(LINE_CAN_STANDBY); // CAN disabled
         EnterSleep();
     }
     #endif
@@ -367,6 +366,8 @@ void InitVarMap()
     #if HAS_BATT_VOLT_SENSE
     pVarMap[index++] = &fBattVolt;
     #endif
+    pVarMap[index++] = &fMuteCanTx;
+    pVarMap[index++] = &fForceSleep;
 
     #if NUM_DIG_INPUTS > 0
     for (uint8_t i = 0; i < NUM_DIG_INPUTS; i++)

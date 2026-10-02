@@ -10,7 +10,7 @@
 
 // External variables from pdm.cpp that we need access to
 extern DeviceConfig stConfig;
-extern bool bSleepRequest;
+extern float fForceSleep;
 
 void CheckRequestMsgs(CANRxFrame *frame)
 {
@@ -40,7 +40,7 @@ void CheckRequestMsgs(CANRxFrame *frame)
 
         PostTxFrame(&txMsg);
 
-        bSleepRequest = true;
+        fForceSleep = 1.0f; // Set force sleep flag to enter sleep mode
     }
     #endif
 

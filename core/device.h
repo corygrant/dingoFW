@@ -69,6 +69,8 @@ extern float *pVarMap[VAR_MAP_SIZE];
 extern DeviceState eState;
 extern bool bDeviceOverTemp;
 extern bool bDeviceCriticalTemp;
+extern float fMuteCanTx;
+extern float fForceSleep;
 
 #if HAS_EXT_TEMP_SENSOR
 extern float fTempSensor;
@@ -77,7 +79,7 @@ extern float fTempSensor;
 extern float fBattVolt;
 #endif
 #if CAN_SLEEP
-extern bool bSleepRequest;
+extern bool bForceSleep;
 #endif
 
 #if HAS_USB

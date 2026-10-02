@@ -17,7 +17,7 @@ static uint32_t nUsbDisconnectedTime;
 
 // External variables from pdm.cpp that we need access to
 extern DeviceConfig stConfig;
-extern bool bSleepRequest;
+extern float fForceSleep;
 extern Profet pf[NUM_OUTPUTS];
 
 bool CheckEnterSleep()
@@ -70,7 +70,7 @@ bool CheckEnterSleep()
         nCanRxIdleTime = SYS_TIME - GetLastCanRxTime();
     }
 
-    return bEnterSleep || bSleepRequest;
+    return bEnterSleep || fForceSleep;
 }
 
 void EnableLineEventWithPull(ioline_t line, InputPull pull) 
@@ -94,6 +94,11 @@ void EnableLineEventWithPull(ioline_t line, InputPull pull)
 
 void EnterSleep()
 {
+    // Make sure force sleep is cleared so we don't immediately re-enter sleep after waking up
+    fForceSleep = 0.0f;
+
+    palSetLine(LINE_CAN_STANDBY); // CAN disabled
+
     // Set wakeup sources
 
     // Digital inputs change detection, with configured pullup or pulldown

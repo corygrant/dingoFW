@@ -35,7 +35,14 @@
 
 #define HAS_NEOPIXELS FALSE
 
-#define VAR_MAP_SYS_VARS 3
+//Always false
+//Always true
+//State
+//Temperature sensor
+//Battery voltage
+//Mute CAN TX
+//Force sleep
+#define VAR_MAP_SYS_VARS 5
 #define VAR_MAP_WIPER_VARS 0
 
 #define VAR_MAP_SIZE ( \
