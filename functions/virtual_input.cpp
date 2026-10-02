@@ -29,7 +29,7 @@ void VirtualInput::Update()
         bResultSec0 = bResult0 || bResult1;
         break;
     case BoolOperator::Nor:
-        bResultSec0 = !bResult0 || !bResult1;
+        bResultSec0 = !(bResult0 || bResult1);
         break;
     }
 
@@ -54,7 +54,7 @@ void VirtualInput::Update()
         bResultSec1 = bResultSec0 || bResult2;
         break;
     case BoolOperator::Nor:
-        bResultSec1 = !bResultSec0 || !bResult2;
+        bResultSec1 = !(bResultSec0 || bResult2);
         break;
     }
 
