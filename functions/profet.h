@@ -33,6 +33,9 @@ struct Config_Output{
 // ADC conversion = 20us
 // Rise time = 20us
 // 140us + 20us + 20us = 180us
+// DSEL changeover takes max ~60us
+#define DSEL_SETTLE_US 60
+
 #define PWM_READ_DELAY_SINGLE_CH 180
 // Min duty cycle @ 100Hz = 180us / 10ms  = 1.8%
 // Min duty cycle @ 200Hz = 180us / 5ms   = 3.6%
@@ -90,6 +93,16 @@ public:
     }
 
     void Update(bool bOutEnabled);
+
+    // Dual-channel devices share one IS pin, DSEL picks which channel it reports.
+    // Outputs are updated in two passes so DSEL only settles twice per cycle:
+    // pass 0 = single-channel and CH1, pass 1 = CH2
+    uint8_t GetDselPass() const { return (m_model == ProfetModel::BTS7008_2EPA_CH2) ? 1 : 0; }
+    bool IsDualChannel() const
+    {
+        return (m_model == ProfetModel::BTS7008_2EPA_CH1) || (m_model == ProfetModel::BTS7008_2EPA_CH2);
+    }
+    void SelectDsel();
 
     // Immediately de-energize the output, used before entering a fatal error
     void ForceOff()
@@ -158,7 +171,6 @@ private:
     uint16_t nPwmReadDelay = 0;
 
     void FollowerUpdate();
-    void HandleDsel();
     void MeasureCurrent();
     void CalculateCurrent();
 };

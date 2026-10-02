@@ -17,7 +17,7 @@ void Profet::Update(bool bOutEnabled)
         return;
     }
 
-    HandleDsel();
+    // DSEL for dual-channel devices is set by the caller, see SelectDsel()
 
     // Follower device — mirror primary
     if (pPrimary != nullptr)
@@ -193,20 +193,14 @@ void Profet::FollowerUpdate()
     fFault = 0;
 }
 
-void Profet::HandleDsel()
+void Profet::SelectDsel()
 {
-    // Select the appropriate IS channel on dual-channel devices
-    // DSEL changeover takes max ~60us
+    // Select the IS channel on dual-channel devices
+    // Caller waits DSEL_SETTLE_US before measuring, once for all outputs in the pass
     if (m_model == ProfetModel::BTS7008_2EPA_CH1)
-    {
         palClearLine(m_dsel);
-        chThdSleepMicroseconds(60);
-    }
     else if (m_model == ProfetModel::BTS7008_2EPA_CH2)
-    {
         palSetLine(m_dsel);
-        chThdSleepMicroseconds(60);
-    }
 }
 
 void Profet::MeasureCurrent()

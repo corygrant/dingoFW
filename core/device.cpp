@@ -331,8 +331,28 @@ void CyclicUpdate()
     // Outputs last, so they act on this cycle's inputs and logic
     //=========================================================================
     #if NUM_OUTPUTS > 0
-    for (uint8_t i = 0; i < NUM_OUTPUTS; i++)
-        pf[i].Update(starter.fVal[i]);
+    // Two passes so dual-channel DSEL settles once per pass instead of once per output
+    for (uint8_t nPass = 0; nPass < 2; nPass++)
+    {
+        bool bDual = false;
+        for (uint8_t i = 0; i < NUM_OUTPUTS; i++)
+        {
+            if (pf[i].GetDselPass() == nPass && pf[i].IsDualChannel())
+            {
+                pf[i].SelectDsel();
+                bDual = true;
+            }
+        }
+
+        if (bDual)
+            chThdSleepMicroseconds(DSEL_SETTLE_US);
+
+        for (uint8_t i = 0; i < NUM_OUTPUTS; i++)
+        {
+            if (pf[i].GetDselPass() == nPass)
+                pf[i].Update(starter.fVal[i]);
+        }
+    }
     #endif
 
     #if NUM_DIG_OUTPUTS > 0
