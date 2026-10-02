@@ -6,7 +6,6 @@
 
 msg_t InitCan(Config_Device *conf);
 void StopCan();
-void ClearCanFilters();
-void SetCanFilterId(uint8_t nFilterNum, uint32_t nId, bool bExtended);
-void SetCanFilterEnabled(bool bEnabled);
+// Rebuild hardware filters from live config (config ID, CAN inputs, keypads), safe while running
+void UpdateCanFilters();
 uint32_t GetLastCanRxTime();

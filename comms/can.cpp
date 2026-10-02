@@ -8,16 +8,9 @@
 
 #include <iterator>
 
-static CANFilter canfilters[STM32_CAN_MAX_FILTERS];
-static uint32_t nFilterIds[STM32_CAN_MAX_FILTERS * 2];
-static bool bFilterExtended[STM32_CAN_MAX_FILTERS * 2];
-
 static volatile uint32_t nLastCanRxTime;
-static bool bCanFilterEnabled = true;
 
 extern float fMuteCanTx;
-
-void ConfigureCanFilters();
 
 static THD_WORKING_AREA(waCanCyclicTxThread, 128);
 void CanCyclicTxThread(void *)
@@ -134,13 +127,12 @@ msg_t InitCan(Config_Device *conf)
         StopCan();
     }
 
-    SetCanFilterEnabled(conf->bCanFilterEnabled);
-
-    ConfigureCanFilters();
-
     msg_t ret = canStart(&CAND1, &GetCanConfig(conf->eCanSpeed));
     if (ret != HAL_RET_SUCCESS)
         return ret;
+
+    UpdateCanFilters();
+
     canCyclicTxThreadRef = chThdCreateStatic(waCanCyclicTxThread, sizeof(waCanCyclicTxThread), NORMALPRIO + 1, CanCyclicTxThread, nullptr);
     canTxThreadRef = chThdCreateStatic(waCanTxThread, sizeof(waCanTxThread), NORMALPRIO + 1, CanTxThread, nullptr);
     canRxThreadRef = chThdCreateStatic(waCanRxThread, sizeof(waCanRxThread), NORMALPRIO + 1, CanRxThread, nullptr);
@@ -169,91 +161,112 @@ void StopCan()
     canRxThreadRef = NULL;
 }
 
-void ClearCanFilters()
-{
-    // Clear all filters
-    for (uint8_t i = 0; i < STM32_CAN_MAX_FILTERS; i++)
-    {
-        nFilterIds[i] = 0;
-        bFilterExtended[i] = false;
+//=============================================================================
+// Hardware filters
+// Rebuilt from the live config and written straight to the bxCAN filter
+// registers. The HAL's canSTM32SetFilters() needs the driver stopped (and turns
+// the CAN clock off), this works while running: reception only pauses for the
+// few us spent in filter init mode.
+//=============================================================================
 
-        canfilters[i].register1 = 0;
-        canfilters[i].register2 = 0;
-        canfilters[i].filter = 0;
-        canfilters[i].assignment = 0;
-        canfilters[i].mode = 0;
-        canfilters[i].scale = 0;
-    }
+#define MAX_FILTER_IDS (STM32_CAN_MAX_FILTERS * 2) // 32-bit list mode, 2 IDs per bank
+
+static uint32_t FilterReg(uint32_t nId, bool bExtended)
+{
+    // FR layout: STID[31:21] or EXID[31:3], IDE bit 2
+    return bExtended ? ((nId << 3) | 0x04) : (nId << 21);
 }
 
-void SetCanFilterId(uint8_t nFilterNum, uint32_t nId, bool bExtended)
+static void WriteFilterRegs(const uint32_t *pIds, uint8_t nNumIds)
 {
-    if (nFilterNum >= (STM32_CAN_MAX_FILTERS * 2))
-        return;
+    CAN_TypeDef *can = CAND1.can;
+    uint8_t nBanks = (nNumIds + 1) / 2;
 
-    bFilterExtended[nFilterNum] = bExtended;
+    can->FMR |= CAN_FMR_FINIT; // Keeps CAN2SB as set by the HAL (all banks to CAN1)
+    can->FA1R = 0;
+    can->FFA1R = 0; // All banks to FIFO 0
 
-    if (bExtended)
+    if (nNumIds == 0)
     {
-        nFilterIds[nFilterNum] = (nId << 3) | 0x04; // Set IDE bit for extended ID
+        // Filtering disabled - bank 0, 32-bit mask mode, mask 0 = accept everything
+        can->FM1R = 0;
+        can->FS1R = 1;
+        can->sFilterRegister[0].FR1 = 0;
+        can->sFilterRegister[0].FR2 = 0;
+        nBanks = 1;
     }
     else
     {
-        nFilterIds[nFilterNum] = nId << 21;
+        // 32-bit list mode, odd count repeats the last ID in the spare slot
+        for (uint8_t b = 0; b < nBanks; b++)
+        {
+            can->sFilterRegister[b].FR1 = pIds[b * 2];
+            can->sFilterRegister[b].FR2 = (b * 2 + 1 < nNumIds) ? pIds[b * 2 + 1] : pIds[b * 2];
+        }
+        can->FM1R = (1UL << nBanks) - 1;
+        can->FS1R = (1UL << nBanks) - 1;
     }
+
+    can->FA1R = (1UL << nBanks) - 1;
+    can->FMR &= ~CAN_FMR_FINIT;
 }
 
-void ConfigureCanFilters()
+void UpdateCanFilters()
 {
-
-    if(!bCanFilterEnabled)
-    {
-        // Default HAL config = filter 0 enabled to allow all messages
+    // Registers are only clocked while the driver is running, InitCan() calls this after canStart()
+    if (CAND1.state != CAN_READY)
         return;
-    }
 
-    uint8_t nCurrentFilter = 0;
+    uint32_t nIds[MAX_FILTER_IDS];
+    uint8_t nNumIds = 0;
+    bool bOverflow = false;
 
-    // Go through nFilterIds and set filter register1 and register2 for each filter if ID is set
-    // CANNOT SET ALL FILTERS, MUST USE ONLY THE NUMBER OF REQUIRED FILTERS
-    for (uint8_t i = 0; i < (STM32_CAN_MAX_FILTERS * 2); i += 2)
+    auto Add = [&](uint32_t nId, bool bExtended) {
+        if (nNumIds < MAX_FILTER_IDS)
+            nIds[nNumIds++] = FilterReg(nId, bExtended);
+        else
+            bOverflow = true;
+    };
+
+    if (stConfig.stDevice.bCanFilterEnabled)
     {
-        if (nFilterIds[i] != 0 || nFilterIds[i + 1] != 0)
+        // Config/request frames from dingoConfig
+        Add(stConfig.stDevice.nBaseId + CONFIG_RX_OFFSET, false);
+
+        for (uint8_t i = 0; i < NUM_CAN_INPUTS; i++)
         {
-            canfilters[nCurrentFilter].filter = nCurrentFilter; // Filter bank number
-            canfilters[nCurrentFilter].assignment = 0;          // Assign to FIFO 0
-            canfilters[nCurrentFilter].mode = 1;                // List mode
-            canfilters[nCurrentFilter].scale = 1;               // 32-bit scale
-
-            // First ID (register1)
-            if (nFilterIds[i] != 0)
-            {
-                canfilters[nCurrentFilter].register1 = nFilterIds[i];
-            }
-
-            // Second ID (register2)
-            if (nFilterIds[i + 1] != 0)
-            {
-                canfilters[nCurrentFilter].register2 = nFilterIds[i + 1];
-            }
-
-            nCurrentFilter++;
+            if (stConfig.stCanInput[i].bEnabled)
+                Add(stConfig.stCanInput[i].nID, stConfig.stCanInput[i].nIDE == 1);
         }
+
+        #if NUM_KEYPADS > 0
+        for (uint8_t i = 0; i < NUM_KEYPADS; i++)
+        {
+            const Config_Keypad &kp = stConfig.stKeypad[i];
+            if (!kp.bEnabled)
+                continue;
+
+            // Both brands send button state on the CANopen TPDO1 ID
+            Add(kp.nNodeId + static_cast<uint16_t>(BlinkMarineMessageId::ButtonState), false);
+
+            if (kp.eModel <= KeypadModel::Blink15Key2Dial)
+            {
+                Add(kp.nNodeId + static_cast<uint16_t>(BlinkMarineMessageId::DialState1), false);
+                Add(kp.nNodeId + static_cast<uint16_t>(BlinkMarineMessageId::DialState2), false);
+                Add(kp.nNodeId + static_cast<uint16_t>(BlinkMarineMessageId::AnalogInput), false);
+            }
+        }
+        #endif
     }
 
-    // Apply all filter configurations
-    // If no CAN inputs are enabled, filter[0].register1 is still set to settings request message ID (BaseId-1)
-    canSTM32SetFilters(&CAND1, STM32_CAN_MAX_FILTERS, nCurrentFilter, canfilters);
+    // Filtering disabled, or more IDs than filter slots - accept everything rather than drop frames
+    if (bOverflow)
+        nNumIds = 0;
+
+    WriteFilterRegs(nIds, nNumIds);
 }
 
 uint32_t GetLastCanRxTime()
 {
     return nLastCanRxTime;
-}
-
-void SetCanFilterEnabled(bool bEnabled)
-{
-    bCanFilterEnabled = bEnabled;
-
-    // TODO: Reconfigure filters if enabled/disabled
 }
