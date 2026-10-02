@@ -175,7 +175,7 @@ void States()
         #if NUM_OUTPUTS > 0
         //Turn off all outputs
         for (uint8_t i = 0; i < NUM_OUTPUTS; i++)
-            pf[i].Update(false);
+            pf[i].ForceOff();
         #endif
 
         Error::SetFatalError(FatalErrorType::ErrTemp, MsgSrc::State_Overtemp);
@@ -242,7 +242,7 @@ void States()
         #if NUM_OUTPUTS > 0
         //Turn off all outputs
         for (uint8_t i = 0; i < NUM_OUTPUTS; i++)
-            pf[i].Update(false);
+            pf[i].ForceOff();
         #endif
 
         Error::SetFatalError(eError, MsgSrc::State_Error);

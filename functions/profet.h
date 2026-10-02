@@ -91,6 +91,15 @@ public:
 
     void Update(bool bOutEnabled);
 
+    // Immediately de-energize the output, used before entering a fatal error
+    void ForceOff()
+    {
+        pwm.Off();
+        palClearLine(m_in);
+        eState = ProfetState::Off;
+        fOutput = 0;
+    }
+
     float GetCurrent() { return *const_cast<volatile float*>(&fCurrent); }
     ProfetState GetState() { return eState; }
     uint16_t GetOcCount() { return nOcCount; }
