@@ -9,6 +9,7 @@ void Digital_Output::Update()
         return;
     }
 
-    palWriteLine(m_line, *pInput);
-    fVal = *pInput;
+    bool bOn = (*pInput != 0);
+    palWriteLine(m_line, bOn ? PAL_HIGH : PAL_LOW);
+    fVal = bOn;
 }
