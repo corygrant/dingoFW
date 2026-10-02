@@ -48,10 +48,10 @@ msg_t PostTxFrame(CANTxFrame *frame)
     return MSG_TIMEOUT;  // No free slots
 }
 
-msg_t FetchTxFrame(CANTxFrame *frame)
+msg_t FetchTxFrame(CANTxFrame *frame, sysinterval_t timeout)
 {
     CANTxFrame *txFrame;
-    msg_t result = txMb.fetch(&txFrame, TIME_IMMEDIATE);
+    msg_t result = txMb.fetch(&txFrame, timeout);
     if (result == MSG_OK) {
         *frame = *txFrame; // Copy before freeing the slot so a producer can't overwrite it
         txMutex.lock();
@@ -81,10 +81,10 @@ msg_t PostTxUsbFrame(CANTxFrame *frame)
     return MSG_TIMEOUT;  // No free slots
 }
 
-msg_t FetchTxUsbFrame(CANTxFrame *frame)
+msg_t FetchTxUsbFrame(CANTxFrame *frame, sysinterval_t timeout)
 {
     CANTxFrame *txFrame;
-    msg_t result = txUsbMb.fetch(&txFrame, TIME_IMMEDIATE);
+    msg_t result = txUsbMb.fetch(&txFrame, timeout);
     if (result == MSG_OK) {
         *frame = *txFrame; // Copy before freeing the slot so a producer can't overwrite it
         txUsbMutex.lock();

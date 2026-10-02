@@ -337,56 +337,50 @@ void UsbTxThread(void *)
 
     while (1)
     {
-        // Send all messages in the TX queue
-        msg_t res;
         if (usbGetDriverStateI(&USBD1) == USB_ACTIVE)
         {
-            do
+            // Blocks until a frame is queued, no polling while idle
+            // Timeout so USB disconnect is still noticed
+            if (FetchTxUsbFrame(&msg, TIME_MS2I(100)) == MSG_OK)
             {
-                res = FetchTxUsbFrame(&msg);
-                if (res == MSG_OK)
+                uint8_t nData[22];
+                nData[0] = 't';
+                nData[1] = (msg.SID >> 8) & 0xF;
+                nData[2] = (msg.SID >> 4) & 0xF;
+                nData[3] = msg.SID & 0xF;
+                nData[4] = (msg.DLC & 0xFF);
+                nData[5] = (msg.data8[0] >> 4);
+                nData[6] = (msg.data8[0] & 0x0F);
+                nData[7] = (msg.data8[1] >> 4);
+                nData[8] = (msg.data8[1] & 0x0F);
+                nData[9] = (msg.data8[2] >> 4);
+                nData[10] = (msg.data8[2] & 0x0F);
+                nData[11] = (msg.data8[3] >> 4);
+                nData[12] = (msg.data8[3] & 0x0F);
+                nData[13] = (msg.data8[4] >> 4);
+                nData[14] = (msg.data8[4] & 0x0F);
+                nData[15] = (msg.data8[5] >> 4);
+                nData[16] = (msg.data8[5] & 0x0F);
+                nData[17] = (msg.data8[6] >> 4);
+                nData[18] = (msg.data8[6] & 0x0F);
+                nData[19] = (msg.data8[7] >> 4);
+                nData[20] = (msg.data8[7] & 0x0F);
+                nData[21] = '\r';
+
+                // Shift the data to ASCII, except the first 't' and last '\r' 
+                for (uint8_t i = 1; i <= 20; i++)
                 {
-                    uint8_t nData[22];
-                    nData[0] = 't';
-                    nData[1] = (msg.SID >> 8) & 0xF;
-                    nData[2] = (msg.SID >> 4) & 0xF;
-                    nData[3] = msg.SID & 0xF;
-                    nData[4] = (msg.DLC & 0xFF);
-                    nData[5] = (msg.data8[0] >> 4);
-                    nData[6] = (msg.data8[0] & 0x0F);
-                    nData[7] = (msg.data8[1] >> 4);
-                    nData[8] = (msg.data8[1] & 0x0F);
-                    nData[9] = (msg.data8[2] >> 4);
-                    nData[10] = (msg.data8[2] & 0x0F);
-                    nData[11] = (msg.data8[3] >> 4);
-                    nData[12] = (msg.data8[3] & 0x0F);
-                    nData[13] = (msg.data8[4] >> 4);
-                    nData[14] = (msg.data8[4] & 0x0F);
-                    nData[15] = (msg.data8[5] >> 4);
-                    nData[16] = (msg.data8[5] & 0x0F);
-                    nData[17] = (msg.data8[6] >> 4);
-                    nData[18] = (msg.data8[6] & 0x0F);
-                    nData[19] = (msg.data8[7] >> 4);
-                    nData[20] = (msg.data8[7] & 0x0F);
-                    nData[21] = '\r';
-
-                    // Shift the data to ASCII, except the first 't' and last '\r' 
-                    for (uint8_t i = 1; i <= 20; i++)
-                    {
-                        // Less than 0xA is a number
-                        // Shift up to ASCII numbers
-                        if (nData[i] < 0xA)
-                            nData[i] += 0x30;
-                        else
-                            nData[i] += 0x37;
-                    }
-
-                    
-                    chnWriteTimeout(&SDU1, (const uint8_t *)nData, sizeof(nData), TIME_MS2I(10));
+                    // Less than 0xA is a number
+                    // Shift up to ASCII numbers
+                    if (nData[i] < 0xA)
+                        nData[i] += 0x30;
+                    else
+                        nData[i] += 0x37;
                 }
-            } while (res == MSG_OK);
 
-            chThdSleepMicroseconds(30);
+                
+                chnWriteTimeout(&SDU1, (const uint8_t *)nData, sizeof(nData), TIME_MS2I(10));
+            }
         }
         else
         {

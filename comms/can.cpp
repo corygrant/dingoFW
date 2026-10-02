@@ -51,24 +51,22 @@ void CanTxThread(void *)
 
     while (1)
     {
-        // Send all messages in the TX queue
-        msg_t res;
-        do
+        // Blocks until a frame is queued, no polling while idle
+        // Timeout only so the thread can check for termination
+        if (FetchTxFrame(&msg, TIME_MS2I(100)) == MSG_OK)
         {
-            res = FetchTxFrame(&msg);
-            if (res == MSG_OK)
-            {
-                msg.IDE = CAN_IDE_STD;
-                msg.RTR = CAN_RTR_DATA;
-                canTransmitTimeout(&CAND1, CAN_ANY_MAILBOX, &msg, TIME_MS2I(10));
-            }
+            // IDE is set by each sender (CAN outputs can be extended), RTR isn't always initialized
+            msg.RTR = CAN_RTR_DATA;
+            canTransmitTimeout(&CAND1, CAN_ANY_MAILBOX, &msg, TIME_MS2I(10));
+
+            // Pacing between frames, set CAN_TX_MSG_SPLIT to 0 to send at bus rate
+            #if CAN_TX_MSG_SPLIT > 0
             chThdSleepMicroseconds(CAN_TX_MSG_SPLIT);
-        } while (res == MSG_OK);
+            #endif
+        }
 
         if (chThdShouldTerminateX())
             chThdExit(MSG_OK);
-
-        chThdSleepMicroseconds(30);
     }
 }
 

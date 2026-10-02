@@ -32,7 +32,7 @@ void CanOutputs::InitAllFrames()
         if (!pConfigs[i]->bEnabled) continue;
 
         uint8_t  nNewIDE      = pConfigs[i]->nIDE;
-        uint16_t nNewID       = pConfigs[i]->nID;
+        uint32_t nNewID       = pConfigs[i]->nID; // 29-bit when extended
         uint8_t  nNewStartBit = pConfigs[i]->nStartBit;
         uint8_t  nNewBitLen   = pConfigs[i]->nBitLength;
         uint16_t nNewInterval = pConfigs[i]->nInterval;
