@@ -128,7 +128,7 @@ void InitDevice()
     InitVarMap(); // Set val pointers
 
     #if HAS_I2C
-    if (!i2cStart(&I2CD1, &i2cConfig) == HAL_RET_SUCCESS)
+    if (i2cStart(&I2CD1, &i2cConfig) != HAL_RET_SUCCESS)
         Error::SetFatalError(FatalErrorType::ErrI2C, MsgSrc::Init);
     #endif
 
@@ -138,14 +138,14 @@ void InitDevice()
 
     InitParamThread();
 
-    if(!InitAdc() == HAL_RET_SUCCESS)
+    if (InitAdc() != HAL_RET_SUCCESS)
         Error::SetFatalError(FatalErrorType::ErrADC, MsgSrc::Init);
         
-    if(!InitCan(&stConfig.stDevice) == HAL_RET_SUCCESS) // Starts CAN threads
+    if (InitCan(&stConfig.stDevice) != HAL_RET_SUCCESS) // Starts CAN threads
         Error::SetFatalError(FatalErrorType::ErrCAN, MsgSrc::Init);
 
     #if HAS_USB
-    if (!InitUsb() == HAL_RET_SUCCESS) // Starts USB threads
+    if (InitUsb() != HAL_RET_SUCCESS) // Starts USB threads
         Error::SetFatalError(FatalErrorType::ErrUSB, MsgSrc::Init);
     #endif
 
@@ -261,19 +261,15 @@ void CyclicUpdate()
 {
     CANRxFrame rxMsg;
 
-    while (!RxFramesEmpty())
+    while (FetchRxFrame(&rxMsg) == MSG_OK)
     {
-        msg_t res = FetchRxFrame(&rxMsg);
-        if (res == MSG_OK)
-        {
-            for (uint8_t i = 0; i < NUM_CAN_INPUTS; i++)
-                canIn[i].CheckMsg(rxMsg);
+        for (uint8_t i = 0; i < NUM_CAN_INPUTS; i++)
+            canIn[i].CheckMsg(rxMsg);
 
-            #if NUM_KEYPADS > 0
-            for (uint8_t i = 0; i < NUM_KEYPADS; i++)
-                keypad[i].CheckMsg(rxMsg);
-            #endif
-        }
+        #if NUM_KEYPADS > 0
+        for (uint8_t i = 0; i < NUM_KEYPADS; i++)
+            keypad[i].CheckMsg(rxMsg);
+        #endif
     }
 
     //=========================================================================

@@ -60,11 +60,6 @@ bool CheckEnterSleep()
                   ((SYS_TIME - nAllOutputsOffTime) > SLEEP_TIMEOUT) &&
                   (nCanRxIdleTime > SLEEP_TIMEOUT);
 
-    if (nCanRxIdleTime > SLEEP_TIMEOUT)
-    {
-        nCanRxIdleTime = SYS_TIME - GetLastCanRxTime();
-    }
-
     return bEnterSleep || fForceSleep;
 }
 

@@ -126,8 +126,3 @@ msg_t FetchRxFrame(CANRxFrame *frame)
     }
     return result;
 }
-
-bool RxFramesEmpty()
-{
-    return (rxMb.getUsedCountI() == 0);
-}
