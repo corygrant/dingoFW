@@ -102,30 +102,24 @@ void Profet::Update(bool bOutEnabled)
 
         palClearLine(m_in);
 
-        // No reset, straight to fault
-        if (pConfig->eResetMode == ProfetResetMode::None)
+        // No reset, or overcurrent count exceeded - latch fault
+        // Checked first so nothing below can override it
+        if ((pConfig->eResetMode == ProfetResetMode::None) ||
+            (pConfig->eResetMode == ProfetResetMode::Count && nOcCount >= pConfig->nResetLimit))
         {
             eState = ProfetState::Fault;
         }
-
-        // Overcurrent count exceeded
-        if (nOcCount >= pConfig->nResetLimit && pConfig->eResetMode == ProfetResetMode::Count)
+        // Check for turn off
+        else if (eReqState == ProfetState::Off)
         {
-            eState = ProfetState::Fault;
+            eState = ProfetState::Off;
         }
-
         // Overcurrent reset time exceeded
         // ResetEndless or ResetCount
-        if ((SYS_TIME - nOcTriggerTime) > pConfig->nResetTime)
+        else if ((SYS_TIME - nOcTriggerTime) > pConfig->nResetTime)
         {
             nInRushOnTime = SYS_TIME;
             eState = ProfetState::On;
-        }
-
-        // Check for turn off
-        if (eReqState == ProfetState::Off)
-        {
-            eState = ProfetState::Off;
         }
         break;
 
