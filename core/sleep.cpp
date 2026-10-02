@@ -92,6 +92,15 @@ void EnterSleep()
     // Make sure force sleep is cleared so we don't immediately re-enter sleep after waking up
     fForceSleep = 0.0f;
 
+    // Forced sleep can arrive with outputs on - shut them off, no current protection while stopped
+    #if NUM_OUTPUTS > 0
+    for (uint8_t i = 0; i < NUM_OUTPUTS; i++)
+        pf[i].ForceOff();
+    #endif
+
+    // Let CanTxThread flush queued frames before the transceiver goes to standby
+    chThdSleepMilliseconds(100);
+
     palSetLine(LINE_CAN_STANDBY); // CAN disabled
 
     // Set wakeup sources

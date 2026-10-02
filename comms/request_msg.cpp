@@ -28,7 +28,7 @@ void CheckRequestMsgs(CANRxFrame *frame)
         CANTxFrame txMsg;
         txMsg.SID = stConfig.stDevice.nBaseId + CONFIG_TX_OFFSET;
         txMsg.IDE = CAN_IDE_STD;
-        txMsg.DLC = 2;
+        txMsg.DLC = 8;
         txMsg.data8[0] = static_cast<uint8_t>(MsgCmd::Sleep);
         txMsg.data8[1] = 'Q';
         txMsg.data8[2] = 'U';
