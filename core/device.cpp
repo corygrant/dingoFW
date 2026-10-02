@@ -53,7 +53,7 @@ Starter starter;
 Keypad keypad[NUM_KEYPADS];
 #endif
 
-DeviceState eState = DeviceState::Run;
+volatile DeviceState eState = DeviceState::Run;
 float fState; //For var map
 FatalErrorType eError = FatalErrorType::NoError;
 DeviceConfig stConfig;
@@ -64,8 +64,8 @@ float fBattVolt;
 float fTempSensor;
 float fMuteCanTx;
 float fForceSleep;
-bool bDeviceOverTemp;
-bool bDeviceCriticalTemp;
+volatile bool bDeviceOverTemp;
+volatile bool bDeviceCriticalTemp;
 bool bBootloaderRequest;
 
 void InitVarMap();

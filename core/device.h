@@ -66,9 +66,10 @@ extern Analog_Input analogIn[NUM_ANALOG_INPUTS];
 extern DeviceConfig stConfig;
 extern DeviceConfig stConfigTemp; // Used for staging new config before applying
 extern float *pVarMap[VAR_MAP_SIZE];
-extern DeviceState eState;
-extern bool bDeviceOverTemp;
-extern bool bDeviceCriticalTemp;
+
+extern volatile DeviceState eState;
+extern volatile bool bDeviceOverTemp;
+extern volatile bool bDeviceCriticalTemp;
 extern float fMuteCanTx;
 extern float fForceSleep;
 
@@ -77,9 +78,6 @@ extern float fTempSensor;
 #endif
 #if HAS_BATT_VOLT_SENSE
 extern float fBattVolt;
-#endif
-#if CAN_SLEEP
-extern bool bForceSleep;
 #endif
 
 #if HAS_USB

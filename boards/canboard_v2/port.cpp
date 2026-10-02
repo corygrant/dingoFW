@@ -64,8 +64,8 @@ const CANConfig& GetCanConfig(CanBitrate bitrate) {
     return canConfig500;
 }
 
-adcsample_t adc1_samples[ADC1_NUM_CHANNELS] = {0};
-adcsample_t adc2_samples[ADC2_NUM_CHANNELS] = {0};
+volatile adcsample_t adc1_samples[ADC1_NUM_CHANNELS] = {0};
+volatile adcsample_t adc2_samples[ADC2_NUM_CHANNELS] = {0};
 
 static const ADCConversionGroup adc1_cfg = {
     .circular = true,
@@ -119,13 +119,13 @@ msg_t InitAdc()
 
     adcSTM32EnableTS(&ADCD1); // Enable temperature sensor
 
-    adcStartConversion(&ADCD1, &adc1_cfg, adc1_samples, ADC1_BUF_DEPTH);
+    adcStartConversion(&ADCD1, &adc1_cfg, const_cast<adcsample_t*>(adc1_samples), ADC1_BUF_DEPTH);
 
     ret = adcStart(&ADCD2, NULL);
     if(ret != HAL_RET_SUCCESS)
         return ret;
 
-    adcStartConversion(&ADCD2, &adc2_cfg, adc2_samples, ADC2_BUF_DEPTH);
+    adcStartConversion(&ADCD2, &adc2_cfg, const_cast<adcsample_t*>(adc2_samples), ADC2_BUF_DEPTH);
 
     return HAL_RET_SUCCESS;
 }

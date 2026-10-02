@@ -91,7 +91,7 @@ public:
 
     void Update(bool bOutEnabled);
 
-    float GetCurrent() { return fCurrent; }
+    float GetCurrent() { return *const_cast<volatile float*>(&fCurrent); }
     ProfetState GetState() { return eState; }
     uint16_t GetOcCount() { return nOcCount; }
     uint8_t GetDutyCycle()
@@ -128,7 +128,10 @@ private:
 
     float *pInput;
 
-    ProfetState eState;
+    // eState/nOcCount are written by DeviceThread's Update() and read by
+    // CanCyclicTxThread via GetState()/GetOcCount() - volatile so the reader
+    // thread can't have the value cached/hoisted by the compiler.
+    volatile ProfetState eState;
     ProfetState eReqState;
     ProfetState eLastState;
 
@@ -139,7 +142,7 @@ private:
     bool bInRushActive;
     uint32_t nInRushOnTime;
 
-    uint16_t nOcCount;       // Number of overcurrents
+    volatile uint16_t nOcCount;       // Number of overcurrents
     uint32_t nOcTriggerTime; // Time of overcurrent
 
     Pwm pwm;

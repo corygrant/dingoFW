@@ -96,11 +96,11 @@ void Keypad::CheckTimeout()
     {
         // Timeout - reset values
         for (uint8_t i = 0; i < KEYPAD_MAX_BUTTONS; i++)
-        {
             fButtonVal[i] = 0;
+        for (uint8_t i = 0; i < KEYPAD_MAX_DIALS; i++)
             fDialVal[i] = 0;
+        for (uint8_t i = 0; i < KEYPAD_MAX_ANALOG_INPUTS; i++)
             fAnalogVal[i] = 0;
-        }
     }
 }
 

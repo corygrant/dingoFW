@@ -12,7 +12,7 @@ static CANFilter canfilters[STM32_CAN_MAX_FILTERS];
 static uint32_t nFilterIds[STM32_CAN_MAX_FILTERS * 2];
 static bool bFilterExtended[STM32_CAN_MAX_FILTERS * 2];
 
-static uint32_t nLastCanRxTime;
+static volatile uint32_t nLastCanRxTime;
 static bool bCanFilterEnabled = true;
 
 extern float fMuteCanTx;

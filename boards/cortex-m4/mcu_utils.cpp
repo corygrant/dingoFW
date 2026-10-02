@@ -19,7 +19,7 @@ void EnterStopMode()
  void RequestBootloader()
 {
     // Set the magic code
-    *((unsigned long *)0x2001FFF0) = 0xDEADBEEF; // End of RAM
+    *((volatile unsigned long *)0x2001FFF0) = 0xDEADBEEF; // End of RAM
 
     // Reset the microcontroller to start the bootloader on next boot
     // See enter_bootloader.S, which overrides the reset handler

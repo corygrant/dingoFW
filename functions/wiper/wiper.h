@@ -113,7 +113,7 @@ private:
 
     Config_Wiper *pConfig;
 
-    WiperState eState;
+    volatile WiperState eState;
 
     float *pParkSw;
     float *pSwipeInput;
@@ -129,7 +129,7 @@ private:
 
     // IntIn Mode
     float *pSpeedInput;
-    WiperSpeed eSelectedSpeed;
+    volatile WiperSpeed eSelectedSpeed;
 
     // MixIn Mode
     float *pOnSw;

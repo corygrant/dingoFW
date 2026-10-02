@@ -29,6 +29,11 @@
 #include "analog_input.h"
 #endif
 
+static inline float VolatileRead(const float &value)
+{
+    return *const_cast<const volatile float*>(&value);
+}
+
 DeviceState GetDeviceState()
 {
     return eState;
@@ -37,7 +42,7 @@ DeviceState GetDeviceState()
 #if HAS_EXT_TEMP_SENSOR
 float GetBoardTemp()
 {
-    return fTempSensor;
+    return VolatileRead(fTempSensor);
 }
 #endif
 
@@ -131,7 +136,7 @@ bool GetDigInputVal(uint8_t nInput)
     if (nInput >= NUM_DIG_INPUTS)
         return false;
 
-    return digIn[nInput].fVal;
+    return VolatileRead(digIn[nInput].fVal);
 }
 #endif
 
@@ -158,7 +163,7 @@ bool GetCanInOutput(uint8_t nInput)
     if (nInput >= NUM_CAN_INPUTS)
         return false;
 
-    return canIn[nInput].fOutput;
+    return VolatileRead(canIn[nInput].fOutput);
 }
 
 float GetCanInVal(uint8_t nInput)
@@ -166,7 +171,7 @@ float GetCanInVal(uint8_t nInput)
     if (nInput >= NUM_CAN_INPUTS)
         return false;
 
-    return canIn[nInput].fVal;
+    return VolatileRead(canIn[nInput].fVal);
 }
 
 float GetCanInFactor(uint8_t nInput)
@@ -198,7 +203,7 @@ uint32_t GetCanInOutputs()
     uint32_t result = 0;
     
     for (uint8_t i = 0; i < NUM_CAN_INPUTS; i++) {
-        result |= (((uint32_t)canIn[i].fOutput & 0x01) << i);
+        result |= (((uint32_t)VolatileRead(canIn[i].fOutput) & 0x01) << i);
     }
     
     return result;
@@ -219,7 +224,7 @@ bool GetVirtInVal(uint8_t nInput)
     if (nInput >= NUM_VIRT_INPUTS)
         return false;
 
-    return virtIn[nInput].fVal;
+    return VolatileRead(virtIn[nInput].fVal);
 }
 
 uint32_t GetVirtIns()
@@ -227,7 +232,7 @@ uint32_t GetVirtIns()
     uint32_t result = 0;
     
     for (uint8_t i = 0; i < NUM_VIRT_INPUTS; i++) {
-        result |= (((uint32_t)virtIn[i].fVal & 0x01) << i);
+        result |= (((uint32_t)VolatileRead(virtIn[i].fVal) & 0x01) << i);
     }
     
     return result;
@@ -241,12 +246,12 @@ bool GetWiperEnable()
 
 bool GetWiperFastOut()
 {
-    return wiper.fFastOut > 0.0f;
+    return VolatileRead(wiper.fFastOut) > 0.0f;
 }
 
 bool GetWiperSlowOut()
 {
-    return wiper.fSlowOut > 0.0f;
+    return VolatileRead(wiper.fSlowOut) > 0.0f;
 }
 
 WiperState GetWiperState()
@@ -275,7 +280,7 @@ bool GetFlasherVal(uint8_t nFlasher)
     if (nFlasher >= NUM_FLASHERS)
         return false;
 
-    return flasher[nFlasher].fVal;
+    return VolatileRead(flasher[nFlasher].fVal);
 }
 
 bool GetAnyCounterEnable()
@@ -293,7 +298,7 @@ float GetCounterVal(uint8_t nCounter)
     if (nCounter >= NUM_COUNTERS)
         return 0;
 
-    return counter[nCounter].fVal;
+    return VolatileRead(counter[nCounter].fVal);
 }
 
 bool GetAnyConditionEnable()
@@ -311,7 +316,7 @@ uint32_t GetConditions()
     uint32_t result = 0;
     
     for (uint8_t i = 0; i < NUM_CONDITIONS; i++) {
-        result |= (((uint32_t)condition[i].fVal & 0x01) << i);
+        result |= (((uint32_t)VolatileRead(condition[i].fVal) & 0x01) << i);
     }
     
     return result;
@@ -351,7 +356,7 @@ uint32_t GetKeypadButtons(uint8_t nKeypad)
     uint32_t result = 0;
 
     for (uint8_t i = 0; i < KEYPAD_MAX_BUTTONS; i++) {
-        result |= (((uint32_t)keypad[nKeypad].fButtonVal[i] & 0x01) << i);
+        result |= (((uint32_t)VolatileRead(keypad[nKeypad].fButtonVal[i]) & 0x01) << i);
     }
 
     return result;
@@ -369,7 +374,7 @@ float GetKeypadDialVal(uint8_t nKeypad, uint8_t nDial)
         return 0;
 
     #if NUM_KEYPADS > 0
-    return keypad[nKeypad].fDialVal[nDial];
+    return VolatileRead(keypad[nKeypad].fDialVal[nDial]);
     #else
     return 0;
     #endif
@@ -382,7 +387,7 @@ bool GetDigOutputState(uint8_t nOutput)
     if (nOutput >= NUM_DIG_OUTPUTS)
         return false;
 
-    return static_cast<bool>(digOut[nOutput].fVal);
+    return static_cast<bool>(VolatileRead(digOut[nOutput].fVal));
 }
 #endif
 
@@ -392,7 +397,7 @@ uint16_t GetAnalogInputVal(uint8_t nInput)
     if (nInput >= NUM_ANALOG_INPUTS)
         return 0;
 
-    return static_cast<uint16_t>(analogIn[nInput].fVal);
+    return static_cast<uint16_t>(VolatileRead(analogIn[nInput].fVal));
 }
 
 float GetAnalogInputMv(uint8_t nInput)
@@ -400,7 +405,7 @@ float GetAnalogInputMv(uint8_t nInput)
     if (nInput >= NUM_ANALOG_INPUTS)
         return 0;
 
-    return analogIn[nInput].fValMillivolts;
+    return VolatileRead(analogIn[nInput].fValMillivolts);
 }
 
 uint8_t GetRotarySwitchPos(uint8_t nInput)
@@ -408,7 +413,7 @@ uint8_t GetRotarySwitchPos(uint8_t nInput)
     if (nInput >= NUM_ANALOG_INPUTS)
         return 0;
 
-    return static_cast<uint8_t>(analogIn[nInput].fRotaryPos);
+    return static_cast<uint8_t>(VolatileRead(analogIn[nInput].fRotaryPos));
 }
 
 bool GetAnalogSwitchVal(uint8_t nInput)
@@ -416,7 +421,7 @@ bool GetAnalogSwitchVal(uint8_t nInput)
     if (nInput >= NUM_ANALOG_INPUTS)
         return false;
 
-    return static_cast<bool>(analogIn[nInput].fSwitchVal);
+    return static_cast<bool>(VolatileRead(analogIn[nInput].fSwitchVal));
 }
 
 bool GetAnyAnalogInputEnable()

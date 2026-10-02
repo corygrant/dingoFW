@@ -59,6 +59,7 @@ public:
     float fAnalogVal[KEYPAD_MAX_ANALOG_INPUTS];
 
     Config_Keypad* pConfig = nullptr;
+
     float* pDimmingInput = nullptr;
 
     uint8_t nBacklightBrightness = 0;

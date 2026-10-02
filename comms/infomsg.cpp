@@ -24,7 +24,6 @@ static InfoMsg OutputFaultMsg[NUM_OUTPUTS];
 #endif
 
 extern DeviceConfig stConfig;
-extern DeviceState eState;
 
 #if HAS_BATT_VOLT_SENSE
 extern float fBattVolt;

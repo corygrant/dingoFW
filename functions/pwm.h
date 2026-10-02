@@ -85,7 +85,7 @@ private:
     void UpdateSoftStart();
     void UpdateFrequency();
 
-    uint16_t nDutyCycle;
+    volatile uint16_t nDutyCycle;
     uint16_t nLastFreq;
 
     bool bChannelEnabled;

@@ -77,6 +77,9 @@ int32_t Dbc::DecodeBE(const uint8_t *pData, uint8_t nStartBit,
 
     for (int i = 0; i < nBitLength; i++)
     {
+        if (byteIndex >= 8)
+            break;
+
         // Extract bit
         if ((pData[byteIndex] >> bitIndex) & 1)
             value |= (1ULL << (nBitLength - 1 - i));
@@ -141,6 +144,9 @@ void Dbc::EncodeBE(uint8_t *pData, int32_t nRawValue,
 
     for (int i = 0; i < nBitLength; i++)
     {
+        if (byteIndex >= 8)
+            break;
+
         if ((value >> (nBitLength - 1 - i)) & 1)
             pData[byteIndex] |=  (1 << bitIndex);
         else
