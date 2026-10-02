@@ -97,16 +97,23 @@ void EnterSleep()
     // Set wakeup sources
 
     // Digital inputs change detection, with configured pullup or pulldown
-    for(uint8_t i = 0; i < NUM_DIG_INPUTS; i++)
+    // Can be disabled in config
+    if(!stConfig.stDevice.bDisableDigInWake)
     {
-        EnableLineEventWithPull(digIn[i].GetLine(), stConfig.stDigInput[i].ePull);
+        for(uint8_t i = 0; i < NUM_DIG_INPUTS; i++)
+        {
+            EnableLineEventWithPull(digIn[i].GetLine(), stConfig.stDigInput[i].ePull);
+        }
     }
 
-    // CAN receive detection
-    palSetLineMode(LINE_CAN_RX, PAL_MODE_INPUT);
-    palEnableLineEvent(LINE_CAN_RX, PAL_EVENT_MODE_BOTH_EDGES | PAL_STM32_PUPDR_FLOATING);
+    // CAN receive detection - can be disabled in config
+    if(!stConfig.stDevice.bDisableCanWake)
+    {
+        palSetLineMode(LINE_CAN_RX, PAL_MODE_INPUT);
+        palEnableLineEvent(LINE_CAN_RX, PAL_EVENT_MODE_BOTH_EDGES | PAL_STM32_PUPDR_FLOATING);
+    }
 
-    // USB detection
+    // USB detection - always active
     palSetLineMode(LINE_USB_DP, PAL_MODE_INPUT);
     palEnableLineEvent(LINE_USB_DP, PAL_EVENT_MODE_BOTH_EDGES | PAL_STM32_PUPDR_FLOATING);
     palSetLineMode(LINE_USB_DM, PAL_MODE_INPUT);

@@ -42,6 +42,8 @@ struct Config_Device{
 
   //Not used by all devices
   bool bSleepEnabled;
+  bool bDisableDigInWake;
+  bool bDisableCanWake;
   bool bConnectUsbToCan;
 };
 

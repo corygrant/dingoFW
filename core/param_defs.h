@@ -6,15 +6,19 @@
 // Parameter definitions for compile-time registration
 // Index = base + instance, SubIndex = parameter within instance
 
+// {Index, SubIndex, Value Pointer, Temporary Value Pointer, Parameter Type, Default Value, Minimum Value, Maximum Value}
+
 //=============================================================================
 // Device Config Parameters - Base 0x0000
 //=============================================================================
 #define DEVICE_CONFIG_PARAMS() \
-    {0x0000, 0, &stConfig.stDevice.nBaseId,            &stConfigTemp.stDevice.nBaseId,           ParamType::UInt16, DEFAULT_BASE_ID, 0, 0x7FF}, \
-    {0x0000, 1, &stConfig.stDevice.eCanSpeed,          &stConfigTemp.stDevice.eCanSpeed,         ParamType::Enum,   static_cast<uint32_t>(CanBitrate::Bitrate_500K), 0, 4}, \
-    {0x0000, 2, &stConfig.stDevice.bSleepEnabled,      &stConfigTemp.stDevice.bSleepEnabled,     ParamType::Bool,   0, 0, 1}, \
-    {0x0000, 3, &stConfig.stDevice.bCanFilterEnabled,  &stConfigTemp.stDevice.bCanFilterEnabled, ParamType::Bool,   0, 0, 1}, \
-    {0x0000, 4, &stConfig.stDevice.bConnectUsbToCan,   &stConfigTemp.stDevice.bConnectUsbToCan,  ParamType::Bool,   1, 0, 1}
+    {0x0000, 0, &stConfig.stDevice.nBaseId,             &stConfigTemp.stDevice.nBaseId,           ParamType::UInt16, DEFAULT_BASE_ID, 0, 0x7FF}, \
+    {0x0000, 1, &stConfig.stDevice.eCanSpeed,           &stConfigTemp.stDevice.eCanSpeed,         ParamType::Enum,   static_cast<uint32_t>(CanBitrate::Bitrate_500K), 0, 4}, \
+    {0x0000, 2, &stConfig.stDevice.bSleepEnabled,       &stConfigTemp.stDevice.bSleepEnabled,     ParamType::Bool,   0, 0, 1}, \
+    {0x0000, 3, &stConfig.stDevice.bCanFilterEnabled,   &stConfigTemp.stDevice.bCanFilterEnabled, ParamType::Bool,   0, 0, 1}, \
+    {0x0000, 4, &stConfig.stDevice.bDisableDigInWake,   &stConfigTemp.stDevice.bDisableDigInWake, ParamType::Bool,   0, 0, 1}, \
+    {0x0000, 5, &stConfig.stDevice.bDisableCanWake,     &stConfigTemp.stDevice.bDisableCanWake,   ParamType::Bool,   0, 0, 1}, \
+    {0x0000, 6, &stConfig.stDevice.bConnectUsbToCan,    &stConfigTemp.stDevice.bConnectUsbToCan,  ParamType::Bool,   1, 0, 1}
 
 //=============================================================================
 // Output Parameters - Base 0x1000
