@@ -10,7 +10,7 @@
 
 static volatile uint32_t nLastCanRxTime;
 
-extern float fMuteCanTx;
+extern DeviceConfig stConfig;
 
 static THD_WORKING_AREA(waCanCyclicTxThread, 128);
 void CanCyclicTxThread(void *)
@@ -22,7 +22,7 @@ void CanCyclicTxThread(void *)
     while (1)
     {
 
-        if (!IsParamOpInProgress() && !fMuteCanTx)
+        if (!IsParamOpInProgress() && !*pVarMap[stConfig.stDevice.nMuteCanTxInput])
         {
             for (uint8_t i = 0; i < NUM_TX_MSGS; i++)
             {

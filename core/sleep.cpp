@@ -17,7 +17,7 @@ static uint32_t nUsbDisconnectedTime;
 
 // External variables from pdm.cpp that we need access to
 extern DeviceConfig stConfig;
-extern float fForceSleep;
+bool bSleepRequest;
 extern Profet pf[NUM_OUTPUTS];
 
 bool CheckEnterSleep()
@@ -60,7 +60,7 @@ bool CheckEnterSleep()
                   ((SYS_TIME - nAllOutputsOffTime) > SLEEP_TIMEOUT) &&
                   (nCanRxIdleTime > SLEEP_TIMEOUT);
 
-    return bEnterSleep || fForceSleep;
+    return bEnterSleep || bSleepRequest || *pVarMap[stConfig.stDevice.nForceSleepInput];
 }
 
 void EnableLineEventWithPull(ioline_t line, InputPull pull) 
@@ -84,8 +84,8 @@ void EnableLineEventWithPull(ioline_t line, InputPull pull)
 
 void EnterSleep()
 {
-    // Make sure force sleep is cleared so we don't immediately re-enter sleep after waking up
-    fForceSleep = 0.0f;
+    // Clear CAN sleep request so we don't immediately re-enter sleep after waking up
+    bSleepRequest = false;
 
     // Forced sleep can arrive with outputs on - shut them off, no current protection while stopped
     #if NUM_OUTPUTS > 0

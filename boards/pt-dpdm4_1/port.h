@@ -44,9 +44,7 @@
 //State
 //Temperature sensor
 //Battery voltage
-//Mute CAN TX
-//Force sleep
-#define VAR_MAP_SYS_VARS 7
+#define VAR_MAP_SYS_VARS 5
 #define VAR_MAP_WIPER_VARS 6
 
 #define VAR_MAP_SIZE ( \

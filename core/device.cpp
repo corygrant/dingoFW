@@ -62,8 +62,6 @@ float *pVarMap[VAR_MAP_SIZE];
 
 float fBattVolt;
 float fTempSensor;
-float fMuteCanTx;
-float fForceSleep;
 volatile bool bDeviceOverTemp;
 volatile bool bDeviceCriticalTemp;
 bool bBootloaderRequest;
@@ -379,8 +377,6 @@ void InitVarMap()
     #if HAS_BATT_VOLT_SENSE
     pVarMap[index++] = &fBattVolt;
     #endif
-    pVarMap[index++] = &fMuteCanTx;
-    pVarMap[index++] = &fForceSleep;
 
     #if NUM_DIG_INPUTS > 0
     for (uint8_t i = 0; i < NUM_DIG_INPUTS; i++)

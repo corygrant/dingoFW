@@ -32,7 +32,7 @@
 #include "analog_input.h"
 #endif  
 
-#define CONFIG_VERSION 0x0006 //Increment when config structure changes
+#define CONFIG_VERSION 0x0007 //Increment when config structure changes
 
 struct Config_Device{
   uint16_t nConfigVersion;
@@ -45,6 +45,8 @@ struct Config_Device{
   bool bDisableDigInWake;
   bool bDisableCanWake;
   bool bConnectUsbToCan;
+  uint16_t nMuteCanTxInput;
+  uint16_t nForceSleepInput;
 };
 
 struct DeviceConfig{
