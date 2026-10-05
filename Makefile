@@ -152,6 +152,7 @@ CPPSRC = $(ALLCPPSRC) \
 				 core/device.cpp \
 				 functions/can_input.cpp \
 				 functions/can_outputs.cpp \
+				 functions/can_message.cpp \
 				 functions/condition.cpp \
 				 functions/counter.cpp \
 				 functions/flasher.cpp \

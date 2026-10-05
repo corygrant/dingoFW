@@ -207,6 +207,27 @@
 #endif
 
 //=============================================================================
+// CAN Message Parameters - Base 0x1C00
+//=============================================================================
+#if NUM_CAN_MESSAGES > 0
+#define CAN_MESSAGE_PARAMS(i) \
+    {0x1C00 + (i), 0,  &stConfig.stCanMessage[i].bEnabled,  &stConfigTemp.stCanMessage[i].bEnabled,  ParamType::Bool,   0, 0, 1}, \
+    {0x1C00 + (i), 1,  &stConfig.stCanMessage[i].nInput,    &stConfigTemp.stCanMessage[i].nInput,    ParamType::UInt16, 0, 0, VAR_MAP_SIZE - 1}, \
+    {0x1C00 + (i), 2,  &stConfig.stCanMessage[i].nIDE,      &stConfigTemp.stCanMessage[i].nIDE,      ParamType::UInt8,  0, 0, 1}, \
+    {0x1C00 + (i), 3,  &stConfig.stCanMessage[i].nID,       &stConfigTemp.stCanMessage[i].nID,       ParamType::UInt32, 0, 0, 536870911}, \
+    {0x1C00 + (i), 4,  &stConfig.stCanMessage[i].nDLC,      &stConfigTemp.stCanMessage[i].nDLC,      ParamType::UInt8,  8, 0, 8}, \
+    {0x1C00 + (i), 5,  &stConfig.stCanMessage[i].nData[0], &stConfigTemp.stCanMessage[i].nData[0], ParamType::UInt8,  0, 0, 255}, \
+    {0x1C00 + (i), 6,  &stConfig.stCanMessage[i].nData[1], &stConfigTemp.stCanMessage[i].nData[1], ParamType::UInt8,  0, 0, 255}, \
+    {0x1C00 + (i), 7,  &stConfig.stCanMessage[i].nData[2], &stConfigTemp.stCanMessage[i].nData[2], ParamType::UInt8,  0, 0, 255}, \
+    {0x1C00 + (i), 8,  &stConfig.stCanMessage[i].nData[3], &stConfigTemp.stCanMessage[i].nData[3], ParamType::UInt8,  0, 0, 255}, \
+    {0x1C00 + (i), 9,  &stConfig.stCanMessage[i].nData[4], &stConfigTemp.stCanMessage[i].nData[4], ParamType::UInt8,  0, 0, 255}, \
+    {0x1C00 + (i), 10, &stConfig.stCanMessage[i].nData[5], &stConfigTemp.stCanMessage[i].nData[5], ParamType::UInt8,  0, 0, 255}, \
+    {0x1C00 + (i), 11, &stConfig.stCanMessage[i].nData[6], &stConfigTemp.stCanMessage[i].nData[6], ParamType::UInt8,  0, 0, 255}, \
+    {0x1C00 + (i), 12, &stConfig.stCanMessage[i].nData[7], &stConfigTemp.stCanMessage[i].nData[7], ParamType::UInt8,  0, 0, 255}, \
+    {0x1C00 + (i), 13, &stConfig.stCanMessage[i].nInterval, &stConfigTemp.stCanMessage[i].nInterval, ParamType::UInt16, 100, 0, 60000}
+#endif
+
+//=============================================================================
 // CAN Output Parameters - Base 0x2000
 //=============================================================================
 #define CAN_OUTPUT_PARAMS(i) \

@@ -16,6 +16,7 @@
 #include "counter.h"
 #include "condition.h"
 #include "timer.h"
+#include "can_message.h"
 #include "mailbox.h"
 #include "msg.h"
 #include "error.h"
@@ -49,6 +50,9 @@ Counter counter[NUM_COUNTERS];
 Condition condition[NUM_CONDITIONS];
 #if NUM_TIMERS > 0
 Timer timer[NUM_TIMERS];
+#endif
+#if NUM_CAN_MESSAGES > 0
+CanMessage canMsg[NUM_CAN_MESSAGES];
 #endif
 #if HAS_WIPERS > 0
 Wiper wiper;
@@ -378,6 +382,11 @@ void CyclicUpdate()
     canOutputs.Update();
     #endif
 
+    #if NUM_CAN_MESSAGES > 0
+    for (uint8_t i = 0; i < NUM_CAN_MESSAGES; i++)
+        canMsg[i].Update();
+    #endif
+
     #if HAS_NEOPIXELS
     UpdateNeopixels();
     #endif
@@ -513,6 +522,13 @@ void InitVarMap()
     pVarMap[index++] = &ignition.fIgnition;
     pVarMap[index++] = &ignition.fStarter;
     pVarMap[index++] = &ignition.fState;
+    #endif
+
+    #if NUM_CAN_MESSAGES > 0
+    for (uint8_t i = 0; i < NUM_CAN_MESSAGES; i++)
+    {
+        pVarMap[index++] = &canMsg[i].fVal;
+    }
     #endif
 
     //VarMap size must match the expected size
