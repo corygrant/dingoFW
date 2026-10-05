@@ -10,7 +10,7 @@ def build_msg_26(base_id):
         signals=[]
     )
 
-    dial_sigs = create_duplicate_signals("Keypad1Dial", 4, 1, 24, 16, 1, 0)
+    dial_sigs = create_duplicate_signals("Keypad1Dial", 4, 1, 0, 16, 1, 0)
     message.signals.extend(dial_sigs)
 
     return message
