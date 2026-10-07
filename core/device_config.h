@@ -2,7 +2,7 @@
 
 #define MAJOR_VERSION 0
 #define MINOR_VERSION 6
-#define BUILD 0
+#define BUILD 1
 
 #define CAN_TX_CYCLIC_MSG_DELAY 100 //ms
 #define CAN_TX_MSG_SPLIT 30 //us
