@@ -2,7 +2,7 @@
 #include "blink_keypad.h"
 #include "grayhill_keypad.h"
 
-static THD_WORKING_AREA(waKeypadThread, 256);
+static THD_WORKING_AREA(waKeypadThread, 512);
 
 static void KeypadThread(void *arg)
 {
@@ -59,7 +59,7 @@ void Keypad::SetConfig(Config_Keypad* config)
     pConfig = config;
     pDimmingInput = pVarMap[config->nDimmingVar];
 
-    if (config->eModel <= KeypadModel::Blink15Key2Dial) {
+    if (config->eModel < KeypadModel::Grayhill6Key) {
         fnCheckMsg = CheckMsgBlinkMarine;
         fnGetTxMsg = GetTxMsgBlinkMarine;
         fnGetStartMsg = GetStartMsgBlinkMarine;

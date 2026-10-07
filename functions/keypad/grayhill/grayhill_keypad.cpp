@@ -75,6 +75,9 @@ void SetModelGrayhill(Keypad* kp)
         case KeypadModel::Grayhill8Key:
             kp->nNumButtons = 8;
             break;
+        case KeypadModel::Grayhill12Key:
+            kp->nNumButtons = 12;
+            break;
         case KeypadModel::Grayhill15Key:
             kp->nNumButtons = 15;
             break;

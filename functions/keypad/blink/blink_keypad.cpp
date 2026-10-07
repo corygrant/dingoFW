@@ -178,6 +178,9 @@ void SetModelBlinkMarine(Keypad* kp)
             kp->nNumDials = 2;
             kp->numAnalogInputs = 4;
             break;
+        case KeypadModel::Blink1Key:
+            kp->nNumButtons = 1;
+            break;
         default:
             break;
     }

@@ -180,7 +180,11 @@ static void WriteFilterRegs(const uint32_t *pIds, uint8_t nNumIds)
     CAN_TypeDef *can = CAND1.can;
     uint8_t nBanks = (nNumIds + 1) / 2;
 
-    can->FMR |= CAN_FMR_FINIT; // Keeps CAN2SB as set by the HAL (all banks to CAN1)
+    can->FMR |= CAN_FMR_FINIT;
+    #if STM32_HAS_CAN2
+    // HAL splits the banks 50/50 with CAN2, CAN2 is unused so give CAN1 all of them
+    can->FMR = (can->FMR & ~CAN_FMR_CAN2SB) | (STM32_CAN_MAX_FILTERS << CAN_FMR_CAN2SB_Pos);
+    #endif
     can->FA1R = 0;
     can->FFA1R = 0; // All banks to FIFO 0
 
@@ -247,7 +251,7 @@ void UpdateCanFilters()
             // Both brands send button state on the CANopen TPDO1 ID
             Add(kp.nNodeId + static_cast<uint16_t>(BlinkMarineMessageId::ButtonState), false);
 
-            if (kp.eModel <= KeypadModel::Blink15Key2Dial)
+            if (kp.eModel < KeypadModel::Grayhill6Key)
             {
                 Add(kp.nNodeId + static_cast<uint16_t>(BlinkMarineMessageId::DialState1), false);
                 Add(kp.nNodeId + static_cast<uint16_t>(BlinkMarineMessageId::DialState2), false);

@@ -231,7 +231,7 @@
     {0x3000 + (i), 1,  &stConfig.stKeypad[i].nNodeId,                 &stConfigTemp.stKeypad[i].nNodeId,                  ParamType::UInt8,  0, 0, 127}, \
     {0x3000 + (i), 2,  &stConfig.stKeypad[i].bTimeoutEnabled,         &stConfigTemp.stKeypad[i].bTimeoutEnabled,          ParamType::Bool,   0, 0, 1}, \
     {0x3000 + (i), 3,  &stConfig.stKeypad[i].nTimeout,                &stConfigTemp.stKeypad[i].nTimeout,                 ParamType::UInt16, 0, 0, 60000}, \
-    {0x3000 + (i), 4,  &stConfig.stKeypad[i].eModel,                  &stConfigTemp.stKeypad[i].eModel,                   ParamType::Enum,   static_cast<uint8_t>(KeypadModel::Blink12Key), 0, 13}, \
+    {0x3000 + (i), 4,  &stConfig.stKeypad[i].eModel,                  &stConfigTemp.stKeypad[i].eModel,                   ParamType::Enum,   static_cast<uint8_t>(KeypadModel::Blink12Key), 0, static_cast<uint8_t>(KeypadModel::Grayhill20Key)}, \
     {0x3000 + (i), 5,  &stConfig.stKeypad[i].nBacklightBrightness,    &stConfigTemp.stKeypad[i].nBacklightBrightness,     ParamType::UInt8,  63, 0, 63}, \
     {0x3000 + (i), 6,  &stConfig.stKeypad[i].nDimBacklightBrightness, &stConfigTemp.stKeypad[i].nDimBacklightBrightness,  ParamType::UInt8,  32, 0, 63}, \
     {0x3000 + (i), 7,  &stConfig.stKeypad[i].nBacklightColor,         &stConfigTemp.stKeypad[i].nBacklightColor,          ParamType::UInt8,  0, 0, 9}, \
