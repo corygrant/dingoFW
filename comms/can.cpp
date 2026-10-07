@@ -12,7 +12,7 @@ static volatile uint32_t nLastCanRxTime;
 
 extern DeviceConfig stConfig;
 
-static THD_WORKING_AREA(waCanCyclicTxThread, 128);
+static THD_WORKING_AREA(waCanCyclicTxThread, CAN_THREAD_STACK);
 void CanCyclicTxThread(void *)
 {
     chRegSetThreadName("CAN Cyclic Tx");
@@ -42,7 +42,7 @@ void CanCyclicTxThread(void *)
     }
 }
 
-static THD_WORKING_AREA(waCanTxThread, 256);
+static THD_WORKING_AREA(waCanTxThread, CAN_THREAD_STACK);
 void CanTxThread(void *)
 {
     chRegSetThreadName("CAN Tx");
@@ -70,7 +70,7 @@ void CanTxThread(void *)
     }
 }
 
-static THD_WORKING_AREA(waCanRxThread, 128);
+static THD_WORKING_AREA(waCanRxThread, CAN_THREAD_STACK);
 void CanRxThread(void *)
 {
     CANRxFrame msg;
