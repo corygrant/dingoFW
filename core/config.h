@@ -10,6 +10,7 @@
 #include "can_output.h"
 #include "counter.h"
 #include "condition.h"
+#include "timer.h"
 #if NUM_OUTPUTS > 0
 #include "profet.h"
 #endif
@@ -32,7 +33,7 @@
 #include "analog_input.h"
 #endif  
 
-#define CONFIG_VERSION 0x0007 //Increment when config structure changes
+#define CONFIG_VERSION 0x0008 //Increment when config structure changes
 
 struct Config_Device{
   uint16_t nConfigVersion;
@@ -57,6 +58,9 @@ struct DeviceConfig{
   Config_CanOutput stCanOutput[NUM_CAN_OUTPUTS];
   Config_Counter stCounter[NUM_COUNTERS];
   Config_Condition stCondition[NUM_CONDITIONS];
+  #if NUM_TIMERS > 0
+  Config_Timer stTimer[NUM_TIMERS];
+  #endif
 
   #if NUM_DIG_INPUTS > 0
   Config_DigInput stDigInput[NUM_DIG_INPUTS];
