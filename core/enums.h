@@ -224,6 +224,18 @@ enum class DashState : uint8_t
     Restart  // Dash was halted, kept unpowered long enough to boot cleanly again
 };
 
+enum class IgnitionSleepStatus : uint8_t
+{
+    Disabled,    // Ignition does not manage sleep
+    Awake,       // Ignition or door on
+    Counting,
+    Following,   // Follower, sleeps when the master does
+    WaitingDash, // Delay over, dash shutdown still running
+    BlockedUsb,  // Would sleep, USB is connected
+    Quiet,       // All CAN transmit stopped, about to sleep
+    Sleep
+};
+
 //=============================================================================
 // Output (Profet)
 //=============================================================================

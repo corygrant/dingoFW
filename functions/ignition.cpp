@@ -1,5 +1,7 @@
 #include "ignition.h"
 #include "mailbox.h"
+#include "usb.h"
+#include "param_protocol.h"
 
 //=============================================================================
 // Ignition and starter control
@@ -21,21 +23,35 @@
 // CAN frame, read here directly so a button module needs no CAN input.
 //
 // Outputs are handed to the ignition by role instead of by input, and the
-// ignition runs the dash power down on its own:
+// ignition runs the whole power down on its own:
 //
 //   ignition off -> Ignition and Accessory outputs off
 //                -> grace time, in case the ignition comes straight back on
 //                -> dash shutdown frame, repeated until the dash power is cut
+//                -> all CAN transmit stopped, then sleep
 //
 // A door switch powers the dash for a while with the ignition off.
 //
 // With several devices on one bus, one master owns the button and broadcasts
-// its state on nSyncId. Followers switch their outputs from that broadcast.
+// its state on nSyncId. Followers switch their outputs from that broadcast and
+// go quiet when the master asks, so no device is still transmitting when
+// another one goes to sleep - any frame on the bus wakes a sleeping device.
 //=============================================================================
 
 static constexpr uint32_t SYNC_INTERVAL = 100;     // ms between master broadcasts
 static constexpr uint32_t SYNC_TIMEOUT = 500;      // ms without a broadcast before a follower calls the master lost
+static constexpr uint32_t ANNOUNCE_TIME = 300;     // ms the master repeats its sleep request before going quiet
+static constexpr uint32_t QUIET_TIME = 2000;       // ms with all CAN transmit stopped before sleeping
 static constexpr uint32_t RESTART_OFF_TIME = 2000; // ms a halted dash stays unpowered before it may come back on
+
+static bool UsbConnected()
+{
+    #if HAS_USB
+    return GetUsbConnected();
+    #else
+    return false;
+    #endif
+}
 
 void Ignition::CheckMsg(const CANRxFrame &rx)
 {
@@ -49,6 +65,8 @@ void Ignition::CheckMsg(const CANRxFrame &rx)
             eMasterState = (rx.data8[0] <= static_cast<uint8_t>(IgnitionState::Running))
                                ? static_cast<IgnitionState>(rx.data8[0])
                                : IgnitionState::Off;
+            // Stays set after the broadcast stops, the master has gone quiet itself
+            bMasterSleep = (rx.data8[1] & 0x01) != 0;
             nSyncRxTime = SYS_TIME;
             bSyncSeen = true;
         }
@@ -76,9 +94,12 @@ void Ignition::Update()
         bInit = false;
         bDoorInit = false;
         bSyncSeen = false;
+        bMasterSleep = false;
         bButtonFrame = false;
         eState = IgnitionState::Off;
         eDash = DashState::Off;
+        ePhase = SleepPhase::Awake;
+        eSleepStatus = IgnitionSleepStatus::Disabled;
         fIgnition = 0.0f;
         fStarter = 0.0f;
         fAccessory = 0.0f;
@@ -102,6 +123,8 @@ void Ignition::Update()
         bCrankLockout = (pConfig->eMode == IgnitionMode::KeySwitch);
         eState = IgnitionState::Off;
         eDash = DashState::Off;
+        ePhase = SleepPhase::Awake;
+        nIdleSince = nNow;
     }
 
     if (pConfig->eRole == IgnitionRole::Follower)
@@ -114,6 +137,7 @@ void Ignition::Update()
     const bool bWantOn = (eState != IgnitionState::Off) || bDoorActive;
 
     UpdateDash(nNow, bWantOn);
+    UpdateSleep(nNow, bWantOn);
 
     if (pConfig->eRole == IgnitionRole::Master)
         SendSync(nNow);
@@ -385,10 +409,102 @@ void Ignition::UpdateDash(uint32_t nNow, bool bWantOn)
     }
 }
 
+void Ignition::UpdateSleep(uint32_t nNow, bool bWantOn)
+{
+    const bool bFollower = pConfig->eRole == IgnitionRole::Follower;
+    const bool bLink = bFollower && MasterLinkOk(nNow);
+
+    if (bWantOn)
+    {
+        ePhase = SleepPhase::Awake;
+        nIdleSince = nNow;
+        eSleepStatus = IgnitionSleepStatus::Awake;
+        return;
+    }
+
+    bool bTimeUp;
+    if (bFollower && (bLink || bMasterSleep))
+    {
+        // The master decides while it is there
+        bTimeUp = bMasterSleep;
+    }
+    else if (pConfig->nSleepDelay == 0)
+    {
+        ePhase = SleepPhase::Awake;
+        eSleepStatus = IgnitionSleepStatus::Disabled;
+        return;
+    }
+    else
+    {
+        // The quiet time is part of the delay, so the device is asleep
+        // nSleepDelay after the ignition went off
+        const uint32_t nQuietAt = (pConfig->nSleepDelay > QUIET_TIME) ? (pConfig->nSleepDelay - QUIET_TIME) : 0;
+        bTimeUp = (nNow - nIdleSince) >= nQuietAt;
+    }
+
+    const bool bDashBusy = (eDash == DashState::On) ||
+                           (eDash == DashState::Grace) ||
+                           (eDash == DashState::Halting);
+
+    switch (ePhase)
+    {
+    case SleepPhase::Awake:
+        if (!bTimeUp)
+            eSleepStatus = bLink ? IgnitionSleepStatus::Following : IgnitionSleepStatus::Counting;
+        else if (bDashBusy)
+            eSleepStatus = IgnitionSleepStatus::WaitingDash;
+        else if (UsbConnected())
+            eSleepStatus = IgnitionSleepStatus::BlockedUsb;
+        else
+        {
+            ePhase = (pConfig->eRole == IgnitionRole::Master) ? SleepPhase::Announce : SleepPhase::Quiet;
+            nPhaseTime = nNow;
+        }
+        break;
+
+    case SleepPhase::Announce:
+        if ((nNow - nPhaseTime) >= ANNOUNCE_TIME)
+        {
+            ePhase = SleepPhase::Quiet;
+            nPhaseTime = nNow;
+        }
+        break;
+
+    case SleepPhase::Quiet:
+        if (UsbConnected() || !bTimeUp)
+        {
+            // USB plugged in, or the master called its sleep off
+            ePhase = SleepPhase::Awake;
+            break;
+        }
+
+        // A configuration session in progress is allowed to finish
+        if (IsParamOpInProgress())
+            nPhaseTime = nNow;
+        else if ((nNow - nPhaseTime) >= QUIET_TIME)
+            ePhase = SleepPhase::Sleep;
+        break;
+
+    case SleepPhase::Sleep:
+        break;
+    }
+
+    if ((ePhase == SleepPhase::Announce) || (ePhase == SleepPhase::Quiet))
+        eSleepStatus = IgnitionSleepStatus::Quiet;
+    else if (ePhase == SleepPhase::Sleep)
+        eSleepStatus = IgnitionSleepStatus::Sleep;
+}
+
 void Ignition::SendSync(uint32_t nNow)
 {
+    if (TxQuiet())
+        return;
+
+    const bool bSleep = ePhase != SleepPhase::Awake;
+    const bool bChanged = (eState != eLastSyncState) || (bSleep != bLastSyncSleep);
+
     // Changes go out at once, the repeat is what followers time the link on
-    if ((eState == eLastSyncState) && ((nNow - nSyncTxTime) < SYNC_INTERVAL))
+    if (!bChanged && ((nNow - nSyncTxTime) < SYNC_INTERVAL))
         return;
 
     CANTxFrame frame;
@@ -397,12 +513,13 @@ void Ignition::SendSync(uint32_t nNow)
     frame.SID = pConfig->nSyncId;
     frame.DLC = 2;
     frame.data8[0] = static_cast<uint8_t>(eState);
-    frame.data8[1] = 0x00; // Flags, none defined yet
+    frame.data8[1] = bSleep ? 0x01 : 0x00;
 
     PostTxFrame(&frame);
 
     nSyncTxTime = nNow;
     eLastSyncState = eState;
+    bLastSyncSleep = bSleep;
 }
 
 void Ignition::SendShutdown()

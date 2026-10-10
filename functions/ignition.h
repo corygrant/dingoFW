@@ -40,6 +40,8 @@ struct Config_Ignition{
   uint16_t nDoorInput;        //Optional, powers the dash without the ignition
   uint32_t nDoorOnTime;       //ms the dash stays on after the door input
 
+  uint32_t nSleepDelay;       //ms from ignition off to sleep, 0 = ignition does not manage sleep
+
   IgnitionOutputRole eOutputRole[NUM_OUTPUTS];
 };
 
@@ -68,6 +70,10 @@ public:
     // The variable an output with this role is switched from
     float *GetRoleVar(IgnitionOutputRole eRole);
 
+    // All CAN transmit has to stop before sleep, see UpdateSleep()
+    bool TxQuiet() const { return (ePhase == SleepPhase::Quiet) || (ePhase == SleepPhase::Sleep); }
+    bool SleepRequest() const { return ePhase == SleepPhase::Sleep; }
+
     float fIgnition; //Ignition power is on, in every state except Off
     float fStarter;  //Starter motor should be engaged
     float fState;    //IgnitionState, for the var map and diagnostics
@@ -75,10 +81,19 @@ public:
     float fDash;
 
 private:
+    enum class SleepPhase : uint8_t
+    {
+        Awake,
+        Announce, // Master only, tells the followers before going quiet
+        Quiet,
+        Sleep
+    };
+
     void UpdateLocal(uint32_t nNow);
     void UpdateFollower(uint32_t nNow);
     void UpdateDoor(uint32_t nNow);
     void UpdateDash(uint32_t nNow, bool bWantOn);
+    void UpdateSleep(uint32_t nNow, bool bWantOn);
     void SendSync(uint32_t nNow);
     void SendShutdown();
     bool ButtonIn(uint32_t nNow);
@@ -107,10 +122,12 @@ private:
     bool bSyncSeen;
     uint32_t nSyncRxTime;
     IgnitionState eMasterState;
+    bool bMasterSleep;
 
     // Master
     uint32_t nSyncTxTime;
     IgnitionState eLastSyncState;
+    bool bLastSyncSleep;
 
     // Door
     bool bDoorInit;
@@ -122,4 +139,10 @@ private:
     DashState eDash;
     uint32_t nDashTime;
     uint32_t nShutdownTxTime;
+
+    // Sleep
+    SleepPhase ePhase;
+    IgnitionSleepStatus eSleepStatus;
+    uint32_t nIdleSince;
+    uint32_t nPhaseTime;
 };

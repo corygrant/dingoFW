@@ -19,6 +19,9 @@ static uint32_t nUsbDisconnectedTime;
 extern DeviceConfig stConfig;
 bool bSleepRequest;
 extern Profet pf[NUM_OUTPUTS];
+#if HAS_IGNITION
+extern Ignition ignition;
+#endif
 
 bool CheckEnterSleep()
 {
@@ -59,6 +62,11 @@ bool CheckEnterSleep()
                   ((SYS_TIME - nUsbDisconnectedTime) > SLEEP_TIMEOUT) &&
                   ((SYS_TIME - nAllOutputsOffTime) > SLEEP_TIMEOUT) &&
                   (nCanRxIdleTime > SLEEP_TIMEOUT);
+
+    #if HAS_IGNITION
+    if (ignition.SleepRequest())
+        return true;
+    #endif
 
     return bEnterSleep || bSleepRequest || *pVarMap[stConfig.stDevice.nForceSleepInput];
 }

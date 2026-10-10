@@ -308,6 +308,9 @@ void CyclicUpdate()
 
     #if HAS_IGNITION
     ignition.Update();
+    // Stops every frame except replies to dingoConfig while the ignition waits to sleep.
+    // EnterSleep() sets it too, which must not be undone here.
+    SetCanTxQuiet(ignition.TxQuiet() || (eState == DeviceState::Sleep));
     #endif
 
     #if NUM_VIRT_INPUTS > 0

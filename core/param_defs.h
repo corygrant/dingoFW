@@ -228,7 +228,8 @@
     {0x1B00, 28, &stConfig.stIgnition.nGraceTime,             &stConfigTemp.stIgnition.nGraceTime,             ParamType::UInt32, 3000, 0, 600000}, \
     {0x1B00, 29, &stConfig.stIgnition.nDashOffDelay,          &stConfigTemp.stIgnition.nDashOffDelay,          ParamType::UInt32, 5000, 0, 600000}, \
     {0x1B00, 30, &stConfig.stIgnition.nDoorInput,             &stConfigTemp.stIgnition.nDoorInput,             ParamType::UInt16, 0, 0, VAR_MAP_SIZE - 1}, \
-    {0x1B00, 31, &stConfig.stIgnition.nDoorOnTime,            &stConfigTemp.stIgnition.nDoorOnTime,            ParamType::UInt32, 60000, 1000, 3600000}
+    {0x1B00, 31, &stConfig.stIgnition.nDoorOnTime,            &stConfigTemp.stIgnition.nDoorOnTime,            ParamType::UInt32, 60000, 1000, 3600000}, \
+    {0x1B00, 32, &stConfig.stIgnition.nSleepDelay,            &stConfigTemp.stIgnition.nSleepDelay,            ParamType::UInt32, 0, 0, 3600000}
 
 // One role per output, subindex 0x30 + output index
 #define IGNITION_OUTPUT_PARAMS(i) \
