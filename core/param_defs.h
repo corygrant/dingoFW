@@ -209,7 +209,24 @@
     {0x1B00, 11, &stConfig.stIgnition.nButtonId,              &stConfigTemp.stIgnition.nButtonId,              ParamType::UInt32, 0x6F0, 0, 536870911}, \
     {0x1B00, 12, &stConfig.stIgnition.nButtonByte,            &stConfigTemp.stIgnition.nButtonByte,            ParamType::UInt8,  0, 0, 7}, \
     {0x1B00, 13, &stConfig.stIgnition.nButtonMask,            &stConfigTemp.stIgnition.nButtonMask,            ParamType::UInt8,  0x01, 1, 255}, \
-    {0x1B00, 14, &stConfig.stIgnition.nButtonTimeout,         &stConfigTemp.stIgnition.nButtonTimeout,         ParamType::UInt16, 1000, 0, 60000}
+    {0x1B00, 14, &stConfig.stIgnition.nButtonTimeout,         &stConfigTemp.stIgnition.nButtonTimeout,         ParamType::UInt16, 1000, 0, 60000}, \
+    {0x1B00, 15, &stConfig.stIgnition.bShutdownEnabled,       &stConfigTemp.stIgnition.bShutdownEnabled,       ParamType::Bool,   0, 0, 1}, \
+    {0x1B00, 16, &stConfig.stIgnition.nShutdownIDE,           &stConfigTemp.stIgnition.nShutdownIDE,           ParamType::UInt8,  0, 0, 1}, \
+    {0x1B00, 17, &stConfig.stIgnition.nShutdownId,            &stConfigTemp.stIgnition.nShutdownId,            ParamType::UInt32, 0x5AA, 0, 536870911}, \
+    {0x1B00, 18, &stConfig.stIgnition.nShutdownDLC,           &stConfigTemp.stIgnition.nShutdownDLC,           ParamType::UInt8,  1, 0, 8}, \
+    {0x1B00, 19, &stConfig.stIgnition.nShutdownData[0],       &stConfigTemp.stIgnition.nShutdownData[0],       ParamType::UInt8,  1, 0, 255}, \
+    {0x1B00, 20, &stConfig.stIgnition.nShutdownData[1],       &stConfigTemp.stIgnition.nShutdownData[1],       ParamType::UInt8,  0, 0, 255}, \
+    {0x1B00, 21, &stConfig.stIgnition.nShutdownData[2],       &stConfigTemp.stIgnition.nShutdownData[2],       ParamType::UInt8,  0, 0, 255}, \
+    {0x1B00, 22, &stConfig.stIgnition.nShutdownData[3],       &stConfigTemp.stIgnition.nShutdownData[3],       ParamType::UInt8,  0, 0, 255}, \
+    {0x1B00, 23, &stConfig.stIgnition.nShutdownData[4],       &stConfigTemp.stIgnition.nShutdownData[4],       ParamType::UInt8,  0, 0, 255}, \
+    {0x1B00, 24, &stConfig.stIgnition.nShutdownData[5],       &stConfigTemp.stIgnition.nShutdownData[5],       ParamType::UInt8,  0, 0, 255}, \
+    {0x1B00, 25, &stConfig.stIgnition.nShutdownData[6],       &stConfigTemp.stIgnition.nShutdownData[6],       ParamType::UInt8,  0, 0, 255}, \
+    {0x1B00, 26, &stConfig.stIgnition.nShutdownData[7],       &stConfigTemp.stIgnition.nShutdownData[7],       ParamType::UInt8,  0, 0, 255}, \
+    {0x1B00, 27, &stConfig.stIgnition.nShutdownInterval,      &stConfigTemp.stIgnition.nShutdownInterval,      ParamType::UInt16, 500, 0, 60000}, \
+    {0x1B00, 28, &stConfig.stIgnition.nGraceTime,             &stConfigTemp.stIgnition.nGraceTime,             ParamType::UInt32, 3000, 0, 600000}, \
+    {0x1B00, 29, &stConfig.stIgnition.nDashOffDelay,          &stConfigTemp.stIgnition.nDashOffDelay,          ParamType::UInt32, 5000, 0, 600000}, \
+    {0x1B00, 30, &stConfig.stIgnition.nDoorInput,             &stConfigTemp.stIgnition.nDoorInput,             ParamType::UInt16, 0, 0, VAR_MAP_SIZE - 1}, \
+    {0x1B00, 31, &stConfig.stIgnition.nDoorOnTime,            &stConfigTemp.stIgnition.nDoorOnTime,            ParamType::UInt32, 60000, 1000, 3600000}
 
 // One role per output, subindex 0x30 + output index
 #define IGNITION_OUTPUT_PARAMS(i) \

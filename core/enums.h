@@ -202,8 +202,17 @@ enum class IgnitionOutputRole : uint8_t
     None,      // Not controlled by the ignition, the output's own input applies
     Ignition,  // On whenever the ignition is on, cranking included
     Accessory, // Like Ignition, but dropped while cranking
-    Dash,      // On with the ignition
+    Dash,      // On with the ignition and through the dash shutdown sequence
     Starter    // On only while cranking
+};
+
+enum class DashState : uint8_t
+{
+    Off,
+    On,
+    Grace,   // Ignition off, waiting in case it comes straight back on
+    Halting, // Shutdown frame sent, waiting for the dash to finish shutting down
+    Restart  // Dash was halted, kept unpowered long enough to boot cleanly again
 };
 
 //=============================================================================

@@ -24,6 +24,18 @@ struct Config_Ignition{
   uint8_t nButtonMask;      //Button reads pressed when any of these bits is set
   uint16_t nButtonTimeout;  //ms without the frame before it reads released, 0 = never
 
+  //Dash shutdown, applied to the outputs with the Dash role
+  bool bShutdownEnabled;    //Send the shutdown frame, otherwise only the power off delay applies
+  uint8_t nShutdownIDE;
+  uint32_t nShutdownId;
+  uint8_t nShutdownDLC;
+  uint8_t nShutdownData[8];
+  uint16_t nShutdownInterval; //ms between repeats of the shutdown frame
+  uint32_t nGraceTime;        //ms after ignition off before the shutdown starts
+  uint32_t nDashOffDelay;     //ms from the shutdown frame to cutting the dash power
+  uint16_t nDoorInput;        //Optional, powers the dash without the ignition
+  uint32_t nDoorOnTime;       //ms the dash stays on after the door input
+
   IgnitionOutputRole eOutputRole[NUM_OUTPUTS];
 };
 
@@ -42,6 +54,7 @@ public:
         pStartInput = pVarMap[config->nStartInput];
         pEngineRunInput = pVarMap[config->nEngineRunInput];
         pStopInput = pVarMap[config->nStopInput];
+        pDoorInput = pVarMap[config->nDoorInput];
     }
 
     // The button frame, when the button is read from CAN
@@ -58,6 +71,10 @@ public:
     float fDash;
 
 private:
+    void UpdateLocal(uint32_t nNow);
+    void UpdateDoor(uint32_t nNow);
+    void UpdateDash(uint32_t nNow, bool bWantOn);
+    void SendShutdown();
     bool ButtonIn(uint32_t nNow);
 
     Config_Ignition* pConfig = nullptr;
@@ -66,6 +83,7 @@ private:
     float *pStartInput;
     float *pEngineRunInput;
     float *pStopInput;
+    float *pDoorInput;
 
     IgnitionState eState;
 
@@ -77,4 +95,15 @@ private:
     // Button frame
     bool bButtonFrame;
     uint32_t nButtonRxTime;
+
+    // Door
+    bool bDoorInit;
+    bool bLastDoor;
+    bool bDoorActive;
+    uint32_t nDoorTime;
+
+    // Dash
+    DashState eDash;
+    uint32_t nDashTime;
+    uint32_t nShutdownTxTime;
 };
