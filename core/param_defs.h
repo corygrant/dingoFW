@@ -203,7 +203,13 @@
     {0x1B00, 3, &stConfig.stIgnition.nStartInput,     &stConfigTemp.stIgnition.nStartInput,     ParamType::UInt16, 0, 0, VAR_MAP_SIZE - 1}, \
     {0x1B00, 4, &stConfig.stIgnition.nEngineRunInput, &stConfigTemp.stIgnition.nEngineRunInput, ParamType::UInt16, 0, 0, VAR_MAP_SIZE - 1}, \
     {0x1B00, 5, &stConfig.stIgnition.nStopInput,      &stConfigTemp.stIgnition.nStopInput,      ParamType::UInt16, 0, 0, VAR_MAP_SIZE - 1}, \
-    {0x1B00, 6, &stConfig.stIgnition.nMaxCrankTime,   &stConfigTemp.stIgnition.nMaxCrankTime,   ParamType::UInt32, 10000, 500, 30000}
+    {0x1B00, 6, &stConfig.stIgnition.nMaxCrankTime,   &stConfigTemp.stIgnition.nMaxCrankTime,   ParamType::UInt32, 10000, 500, 30000}, \
+    {0x1B00, 9,  &stConfig.stIgnition.eButtonSource,          &stConfigTemp.stIgnition.eButtonSource,          ParamType::Enum,   static_cast<uint32_t>(IgnitionSource::Variable), 0, 1}, \
+    {0x1B00, 10, &stConfig.stIgnition.nButtonIDE,             &stConfigTemp.stIgnition.nButtonIDE,             ParamType::UInt8,  0, 0, 1}, \
+    {0x1B00, 11, &stConfig.stIgnition.nButtonId,              &stConfigTemp.stIgnition.nButtonId,              ParamType::UInt32, 0x6F0, 0, 536870911}, \
+    {0x1B00, 12, &stConfig.stIgnition.nButtonByte,            &stConfigTemp.stIgnition.nButtonByte,            ParamType::UInt8,  0, 0, 7}, \
+    {0x1B00, 13, &stConfig.stIgnition.nButtonMask,            &stConfigTemp.stIgnition.nButtonMask,            ParamType::UInt8,  0x01, 1, 255}, \
+    {0x1B00, 14, &stConfig.stIgnition.nButtonTimeout,         &stConfigTemp.stIgnition.nButtonTimeout,         ParamType::UInt16, 1000, 0, 60000}
 
 // One role per output, subindex 0x30 + output index
 #define IGNITION_OUTPUT_PARAMS(i) \

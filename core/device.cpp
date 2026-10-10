@@ -282,6 +282,10 @@ void CyclicUpdate()
         for (uint8_t i = 0; i < NUM_KEYPADS; i++)
             keypad[i].CheckMsg(rxMsg);
         #endif
+
+        #if HAS_IGNITION
+        ignition.CheckMsg(rxMsg);
+        #endif
     }
 
     //=========================================================================

@@ -190,6 +190,12 @@ enum class IgnitionState : uint8_t
     Running
 };
 
+enum class IgnitionSource : uint8_t
+{
+    Variable, // Any var map entry, usually a digital input
+    CanFrame  // A bit in a CAN frame, decoded by the ignition itself
+};
+
 // What the ignition does with an output it has been given
 enum class IgnitionOutputRole : uint8_t
 {

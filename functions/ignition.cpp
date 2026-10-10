@@ -11,6 +11,9 @@
 //              the start condition input is held also cranks; pressing it on
 //              its own only powers the ignition.
 //
+// The key ON position or the start button is either a variable or a bit in a
+// CAN frame, read here directly so a button module needs no CAN input.
+//
 // The starter is released as soon as the engine-running input goes true, and in
 // any case after nMaxCrankTime. After that limit the start request has to be
 // released before the starter can be engaged again, so a stuck key or a held
@@ -22,11 +25,31 @@
 // the ignition.
 //=============================================================================
 
+void Ignition::CheckMsg(const CANRxFrame &rx)
+{
+    if ((pConfig == nullptr) || !pConfig->bEnabled)
+        return;
+
+    if (pConfig->eButtonSource == IgnitionSource::CanFrame)
+    {
+        const bool bMatch = (pConfig->nButtonIDE == 1)
+                                ? ((rx.IDE == CAN_IDE_EXT) && (rx.EID == pConfig->nButtonId))
+                                : ((rx.IDE == CAN_IDE_STD) && (rx.SID == pConfig->nButtonId));
+
+        if (bMatch && (rx.DLC > pConfig->nButtonByte))
+        {
+            bButtonFrame = (rx.data8[pConfig->nButtonByte] & pConfig->nButtonMask) != 0;
+            nButtonRxTime = SYS_TIME;
+        }
+    }
+}
+
 void Ignition::Update()
 {
     if (!pConfig->bEnabled)
     {
         bInit = false;
+        bButtonFrame = false;
         eState = IgnitionState::Off;
         fIgnition = 0.0f;
         fStarter = 0.0f;
@@ -36,11 +59,11 @@ void Ignition::Update()
         return;
     }
 
-    const bool bIgnIn = *pIgnInput > 0.5f;
+    const uint32_t nNow = SYS_TIME;
+    const bool bIgnIn = ButtonIn(nNow);
     const bool bStartIn = *pStartInput > 0.5f;
     const bool bEngineRun = *pEngineRunInput > 0.5f;
     const bool bStopIn = *pStopInput > 0.5f;
-    const uint32_t nNow = SYS_TIME;
 
     // First pass only samples the inputs. A button already held at power up
     // would otherwise look like a press, and the crank lockout makes sure a key
@@ -183,6 +206,20 @@ void Ignition::Update()
     fState = static_cast<float>(eState);
 
     bLastIgnIn = bIgnIn;
+}
+
+bool Ignition::ButtonIn(uint32_t nNow)
+{
+    if (pConfig->eButtonSource == IgnitionSource::CanFrame)
+    {
+        if (!bButtonFrame)
+            return false;
+
+        // A sender that stops transmitting must not leave the button pressed
+        return (pConfig->nButtonTimeout == 0) || ((nNow - nButtonRxTime) < pConfig->nButtonTimeout);
+    }
+
+    return *pIgnInput > 0.5f;
 }
 
 float *Ignition::GetRoleVar(IgnitionOutputRole eRole)

@@ -264,6 +264,8 @@ void ApplyConfig(uint16_t nIndex)
         #if NUM_OUTPUTS > 0
         BindIgnitionOutputs();
         #endif
+
+        UpdateCanFilters(); // Button ID
     }
     #endif
 

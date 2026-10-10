@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstdint>
+#include "hal.h"
 #include "port.h"
 #include "enums.h"
 
@@ -14,6 +15,14 @@ struct Config_Ignition{
   uint16_t nEngineRunInput; //Engine is running, normally a CAN input via a condition
   uint16_t nStopInput;      //Optional, forces everything off while held
   uint32_t nMaxCrankTime;   //ms, hard limit on how long the starter may be engaged
+
+  //Where the key ON / start button comes from
+  IgnitionSource eButtonSource;
+  uint8_t nButtonIDE;
+  uint32_t nButtonId;
+  uint8_t nButtonByte;
+  uint8_t nButtonMask;      //Button reads pressed when any of these bits is set
+  uint16_t nButtonTimeout;  //ms without the frame before it reads released, 0 = never
 
   IgnitionOutputRole eOutputRole[NUM_OUTPUTS];
 };
@@ -35,6 +44,8 @@ public:
         pStopInput = pVarMap[config->nStopInput];
     }
 
+    // The button frame, when the button is read from CAN
+    void CheckMsg(const CANRxFrame &rx);
     void Update();
 
     // The variable an output with this role is switched from
@@ -47,7 +58,9 @@ public:
     float fDash;
 
 private:
-    Config_Ignition* pConfig;
+    bool ButtonIn(uint32_t nNow);
+
+    Config_Ignition* pConfig = nullptr;
 
     float *pIgnInput;
     float *pStartInput;
@@ -60,4 +73,8 @@ private:
     bool bLastIgnIn;
     bool bCrankLockout;
     uint32_t nCrankStartTime;
+
+    // Button frame
+    bool bButtonFrame;
+    uint32_t nButtonRxTime;
 };
