@@ -20,6 +20,9 @@
 #if HAS_STARTER_DISABLE > 0
 #include "starter.h"
 #endif
+#if HAS_IGNITION > 0
+#include "ignition.h"
+#endif
 #if NUM_KEYPADS > 0
 #include "keypad.h"
 #endif
@@ -33,7 +36,7 @@
 #include "analog_input.h"
 #endif  
 
-#define CONFIG_VERSION 0x0008 //Increment when config structure changes
+#define CONFIG_VERSION 0x0009 //Increment when config structure changes
 
 struct Config_Device{
   uint16_t nConfigVersion;
@@ -73,6 +76,9 @@ struct DeviceConfig{
   #endif
   #if HAS_STARTER_DISABLE
   Config_Starter stStarter;
+  #endif
+  #if HAS_IGNITION
+  Config_Ignition stIgnition;
   #endif
   #if NUM_KEYPADS > 0
   Config_Keypad stKeypad[NUM_KEYPADS];

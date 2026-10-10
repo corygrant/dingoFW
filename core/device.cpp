@@ -28,6 +28,9 @@
 #if HAS_STARTER_DISABLE > 0
 #include "starter.h"
 #endif
+#if HAS_IGNITION > 0
+#include "ignition.h"
+#endif
 #if HAS_USB
 #include "usb.h"
 #endif
@@ -52,6 +55,9 @@ Wiper wiper;
 #endif
 #if HAS_STARTER_DISABLE > 0
 Starter starter;
+#endif
+#if HAS_IGNITION > 0
+Ignition ignition;
 #endif
 #if NUM_KEYPADS > 0
 Keypad keypad[NUM_KEYPADS];
@@ -292,6 +298,10 @@ void CyclicUpdate()
         canIn[i].CheckTimeout();
     #endif
 
+    #if HAS_IGNITION
+    ignition.Update();
+    #endif
+
     #if NUM_VIRT_INPUTS > 0
     for (uint8_t i = 0; i < NUM_VIRT_INPUTS; i++)
         virtIn[i].Update();
@@ -489,14 +499,20 @@ void InitVarMap()
     }
     #endif
 
-    // Timers are added last on purpose: appending keeps every existing
-    // variable index the same, so configs written before they existed still
-    // point at the same variables.
+    // Timers and ignition are added last on purpose: appending keeps every
+    // existing variable index the same, so configs written before these
+    // existed still point at the same variables.
     #if NUM_TIMERS > 0
     for (uint8_t i = 0; i < NUM_TIMERS; i++)
     {
         pVarMap[index++] = &timer[i].fVal;
     }
+    #endif
+
+    #if HAS_IGNITION
+    pVarMap[index++] = &ignition.fIgnition;
+    pVarMap[index++] = &ignition.fStarter;
+    pVarMap[index++] = &ignition.fState;
     #endif
 
     //VarMap size must match the expected size

@@ -55,6 +55,11 @@ const ParamInfo stParams[] = {
     ALL_TIMER_PARAMS,
     #endif
 
+    #if HAS_IGNITION > 0
+    // Ignition (0x1B00)
+    IGNITION_PARAMS(),
+    #endif
+
     // CAN Outputs (0x2000+)
     ALL_CAN_OUTPUT_PARAMS,
 
