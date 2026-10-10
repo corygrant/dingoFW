@@ -16,6 +16,10 @@ struct Config_Ignition{
   uint16_t nStopInput;      //Optional, forces everything off while held
   uint32_t nMaxCrankTime;   //ms, hard limit on how long the starter may be engaged
 
+  //Several devices sharing one ignition
+  IgnitionRole eRole;
+  uint16_t nSyncId;         //Standard ID the master broadcasts its state on
+
   //Where the key ON / start button comes from
   IgnitionSource eButtonSource;
   uint8_t nButtonIDE;
@@ -57,7 +61,7 @@ public:
         pDoorInput = pVarMap[config->nDoorInput];
     }
 
-    // The button frame, when the button is read from CAN
+    // Button frame and, on a follower, the master's state broadcast
     void CheckMsg(const CANRxFrame &rx);
     void Update();
 
@@ -72,10 +76,13 @@ public:
 
 private:
     void UpdateLocal(uint32_t nNow);
+    void UpdateFollower(uint32_t nNow);
     void UpdateDoor(uint32_t nNow);
     void UpdateDash(uint32_t nNow, bool bWantOn);
+    void SendSync(uint32_t nNow);
     void SendShutdown();
     bool ButtonIn(uint32_t nNow);
+    bool MasterLinkOk(uint32_t nNow) const;
 
     Config_Ignition* pConfig = nullptr;
 
@@ -95,6 +102,15 @@ private:
     // Button frame
     bool bButtonFrame;
     uint32_t nButtonRxTime;
+
+    // Follower
+    bool bSyncSeen;
+    uint32_t nSyncRxTime;
+    IgnitionState eMasterState;
+
+    // Master
+    uint32_t nSyncTxTime;
+    IgnitionState eLastSyncState;
 
     // Door
     bool bDoorInit;

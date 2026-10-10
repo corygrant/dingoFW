@@ -265,7 +265,7 @@ void ApplyConfig(uint16_t nIndex)
         BindIgnitionOutputs();
         #endif
 
-        UpdateCanFilters(); // Button ID
+        UpdateCanFilters(); // Button and sync IDs
     }
     #endif
 

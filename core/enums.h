@@ -190,6 +190,15 @@ enum class IgnitionState : uint8_t
     Running
 };
 
+// Several devices on one bus share one ignition: the master owns the button and
+// broadcasts its state, followers switch their outputs from that broadcast
+enum class IgnitionRole : uint8_t
+{
+    Standalone,
+    Master,
+    Follower
+};
+
 enum class IgnitionSource : uint8_t
 {
     Variable, // Any var map entry, usually a digital input

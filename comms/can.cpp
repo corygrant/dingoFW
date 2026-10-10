@@ -262,8 +262,13 @@ void UpdateCanFilters()
 
         #if HAS_IGNITION
         const Config_Ignition &ign = stConfig.stIgnition;
-        if (ign.bEnabled && (ign.eButtonSource == IgnitionSource::CanFrame))
-            Add(ign.nButtonId, ign.nButtonIDE == 1);
+        if (ign.bEnabled)
+        {
+            if (ign.eRole == IgnitionRole::Follower)
+                Add(ign.nSyncId, false);
+            else if (ign.eButtonSource == IgnitionSource::CanFrame)
+                Add(ign.nButtonId, ign.nButtonIDE == 1);
+        }
         #endif
     }
 

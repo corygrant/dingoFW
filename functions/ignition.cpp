@@ -28,14 +28,32 @@
 //                -> dash shutdown frame, repeated until the dash power is cut
 //
 // A door switch powers the dash for a while with the ignition off.
+//
+// With several devices on one bus, one master owns the button and broadcasts
+// its state on nSyncId. Followers switch their outputs from that broadcast.
 //=============================================================================
 
+static constexpr uint32_t SYNC_INTERVAL = 100;     // ms between master broadcasts
+static constexpr uint32_t SYNC_TIMEOUT = 500;      // ms without a broadcast before a follower calls the master lost
 static constexpr uint32_t RESTART_OFF_TIME = 2000; // ms a halted dash stays unpowered before it may come back on
 
 void Ignition::CheckMsg(const CANRxFrame &rx)
 {
     if ((pConfig == nullptr) || !pConfig->bEnabled)
         return;
+
+    if (pConfig->eRole == IgnitionRole::Follower)
+    {
+        if ((rx.IDE == CAN_IDE_STD) && (rx.SID == pConfig->nSyncId) && (rx.DLC >= 2))
+        {
+            eMasterState = (rx.data8[0] <= static_cast<uint8_t>(IgnitionState::Running))
+                               ? static_cast<IgnitionState>(rx.data8[0])
+                               : IgnitionState::Off;
+            nSyncRxTime = SYS_TIME;
+            bSyncSeen = true;
+        }
+        return;
+    }
 
     if (pConfig->eButtonSource == IgnitionSource::CanFrame)
     {
@@ -57,6 +75,7 @@ void Ignition::Update()
     {
         bInit = false;
         bDoorInit = false;
+        bSyncSeen = false;
         bButtonFrame = false;
         eState = IgnitionState::Off;
         eDash = DashState::Off;
@@ -85,12 +104,19 @@ void Ignition::Update()
         eDash = DashState::Off;
     }
 
-    UpdateLocal(nNow);
+    if (pConfig->eRole == IgnitionRole::Follower)
+        UpdateFollower(nNow);
+    else
+        UpdateLocal(nNow);
+
     UpdateDoor(nNow);
 
     const bool bWantOn = (eState != IgnitionState::Off) || bDoorActive;
 
     UpdateDash(nNow, bWantOn);
+
+    if (pConfig->eRole == IgnitionRole::Master)
+        SendSync(nNow);
 
     fIgnition = (eState != IgnitionState::Off) ? 1.0f : 0.0f;
     fStarter = (eState == IgnitionState::Cranking) ? 1.0f : 0.0f;
@@ -237,6 +263,27 @@ void Ignition::UpdateLocal(uint32_t nNow)
     bLastIgnIn = bIgnIn;
 }
 
+bool Ignition::MasterLinkOk(uint32_t nNow) const
+{
+    return bSyncSeen && ((nNow - nSyncRxTime) < SYNC_TIMEOUT);
+}
+
+void Ignition::UpdateFollower(uint32_t nNow)
+{
+    if (MasterLinkOk(nNow))
+    {
+        eState = eMasterState;
+    }
+    else if (eState == IgnitionState::Cranking)
+    {
+        // The master enforces the crank time limit, without it the starter
+        // must not stay engaged
+        eState = IgnitionState::Ignition;
+    }
+    // Otherwise hold the last state: an engine running on this device's
+    // outputs must not stop because of a bus fault
+}
+
 void Ignition::UpdateDoor(uint32_t nNow)
 {
     if (pConfig->nDoorInput == 0)
@@ -336,6 +383,26 @@ void Ignition::UpdateDash(uint32_t nNow, bool bWantOn)
             eDash = DashState::Off;
         break;
     }
+}
+
+void Ignition::SendSync(uint32_t nNow)
+{
+    // Changes go out at once, the repeat is what followers time the link on
+    if ((eState == eLastSyncState) && ((nNow - nSyncTxTime) < SYNC_INTERVAL))
+        return;
+
+    CANTxFrame frame;
+    frame.IDE = CAN_IDE_STD;
+    frame.RTR = CAN_RTR_DATA;
+    frame.SID = pConfig->nSyncId;
+    frame.DLC = 2;
+    frame.data8[0] = static_cast<uint8_t>(eState);
+    frame.data8[1] = 0x00; // Flags, none defined yet
+
+    PostTxFrame(&frame);
+
+    nSyncTxTime = nNow;
+    eLastSyncState = eState;
 }
 
 void Ignition::SendShutdown()

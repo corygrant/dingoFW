@@ -204,6 +204,8 @@
     {0x1B00, 4, &stConfig.stIgnition.nEngineRunInput, &stConfigTemp.stIgnition.nEngineRunInput, ParamType::UInt16, 0, 0, VAR_MAP_SIZE - 1}, \
     {0x1B00, 5, &stConfig.stIgnition.nStopInput,      &stConfigTemp.stIgnition.nStopInput,      ParamType::UInt16, 0, 0, VAR_MAP_SIZE - 1}, \
     {0x1B00, 6, &stConfig.stIgnition.nMaxCrankTime,   &stConfigTemp.stIgnition.nMaxCrankTime,   ParamType::UInt32, 10000, 500, 30000}, \
+    {0x1B00, 7,  &stConfig.stIgnition.eRole,                  &stConfigTemp.stIgnition.eRole,                  ParamType::Enum,   static_cast<uint32_t>(IgnitionRole::Standalone), 0, 2}, \
+    {0x1B00, 8,  &stConfig.stIgnition.nSyncId,                &stConfigTemp.stIgnition.nSyncId,                ParamType::UInt16, 0x6F1, 0, 0x7FF}, \
     {0x1B00, 9,  &stConfig.stIgnition.eButtonSource,          &stConfigTemp.stIgnition.eButtonSource,          ParamType::Enum,   static_cast<uint32_t>(IgnitionSource::Variable), 0, 1}, \
     {0x1B00, 10, &stConfig.stIgnition.nButtonIDE,             &stConfigTemp.stIgnition.nButtonIDE,             ParamType::UInt8,  0, 0, 1}, \
     {0x1B00, 11, &stConfig.stIgnition.nButtonId,              &stConfigTemp.stIgnition.nButtonId,              ParamType::UInt32, 0x6F0, 0, 536870911}, \
