@@ -9,6 +9,8 @@
 #include <iterator>
 
 static volatile uint32_t nLastCanRxTime;
+// While set only replies to dingoConfig are sent, see SetCanTxQuiet()
+static volatile bool bTxQuiet;
 
 extern DeviceConfig stConfig;
 
@@ -22,7 +24,7 @@ void CanCyclicTxThread(void *)
     while (1)
     {
 
-        if (!IsParamOpInProgress() && !*pVarMap[stConfig.stDevice.nMuteCanTxInput])
+        if (!IsParamOpInProgress() && !bTxQuiet && !*pVarMap[stConfig.stDevice.nMuteCanTxInput])
         {
             for (uint8_t i = 0; i < NUM_TX_MSGS; i++)
             {
@@ -57,7 +59,12 @@ void CanTxThread(void *)
         {
             // IDE is set by each sender (CAN outputs can be extended), RTR isn't always initialized
             msg.RTR = CAN_RTR_DATA;
-            canTransmitTimeout(&CAND1, CAN_ANY_MAILBOX, &msg, TIME_MS2I(10));
+
+            const bool bConfigReply = (msg.IDE == CAN_IDE_STD) &&
+                                      (msg.SID == stConfig.stDevice.nBaseId + CONFIG_TX_OFFSET);
+
+            if (!bTxQuiet || bConfigReply)
+                canTransmitTimeout(&CAND1, CAN_ANY_MAILBOX, &msg, TIME_MS2I(10));
 
             // Pacing between frames, set CAN_TX_MSG_SPLIT to 0 to send at bus rate
             #if CAN_TX_MSG_SPLIT > 0
@@ -277,6 +284,15 @@ void UpdateCanFilters()
         nNumIds = 0;
 
     WriteFilterRegs(nIds, nNumIds);
+}
+
+// Before sleep every device on the bus has to stop transmitting, a frame from
+// one that is still awake wakes the others straight back up. Covers the cyclic
+// status, CAN outputs, CAN messages and keypad frames alike, as they all go
+// through CanTxThread. Frames queued while quiet are dropped, not delayed.
+void SetCanTxQuiet(bool bQuiet)
+{
+    bTxQuiet = bQuiet;
 }
 
 uint32_t GetLastCanRxTime()
