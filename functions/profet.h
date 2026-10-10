@@ -92,6 +92,10 @@ public:
         pwm.SetConfig(&config->stPwm);
     }
 
+    // Switch the output from another variable than its configured input,
+    // the ignition does this for the outputs it has been given a role for
+    void SetInput(float *pIn) { pInput = pIn; }
+
     void Update(bool bOutEnabled);
 
     // Dual-channel devices share one IS pin, DSEL picks which channel it reports.
