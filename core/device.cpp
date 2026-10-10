@@ -15,6 +15,7 @@
 #include "flasher.h"
 #include "counter.h"
 #include "condition.h"
+#include "timer.h"
 #include "mailbox.h"
 #include "msg.h"
 #include "error.h"
@@ -26,6 +27,9 @@
 #endif
 #if HAS_STARTER_DISABLE > 0
 #include "starter.h"
+#endif
+#if HAS_IGNITION > 0
+#include "ignition.h"
 #endif
 #if HAS_USB
 #include "usb.h"
@@ -43,11 +47,17 @@ VirtualInput virtIn[NUM_VIRT_INPUTS];
 Flasher flasher[NUM_FLASHERS];
 Counter counter[NUM_COUNTERS];
 Condition condition[NUM_CONDITIONS];
+#if NUM_TIMERS > 0
+Timer timer[NUM_TIMERS];
+#endif
 #if HAS_WIPERS > 0
 Wiper wiper;
 #endif
 #if HAS_STARTER_DISABLE > 0
 Starter starter;
+#endif
+#if HAS_IGNITION > 0
+Ignition ignition;
 #endif
 #if NUM_KEYPADS > 0
 Keypad keypad[NUM_KEYPADS];
@@ -288,6 +298,10 @@ void CyclicUpdate()
         canIn[i].CheckTimeout();
     #endif
 
+    #if HAS_IGNITION
+    ignition.Update();
+    #endif
+
     #if NUM_VIRT_INPUTS > 0
     for (uint8_t i = 0; i < NUM_VIRT_INPUTS; i++)
         virtIn[i].Update();
@@ -314,6 +328,12 @@ void CyclicUpdate()
     #if NUM_CONDITIONS > 0    
     for (uint8_t i = 0; i < NUM_CONDITIONS; i++)
         condition[i].Update();
+    #endif
+
+    // After the conditions, so a timer can be driven by one
+    #if NUM_TIMERS > 0
+    for (uint8_t i = 0; i < NUM_TIMERS; i++)
+        timer[i].Update();
     #endif
 
     #if NUM_KEYPADS > 0
@@ -477,6 +497,22 @@ void InitVarMap()
             pVarMap[index++] = &keypad[i].fAnalogVal[j];
         }
     }
+    #endif
+
+    // Timers and ignition are added last on purpose: appending keeps every
+    // existing variable index the same, so configs written before these
+    // existed still point at the same variables.
+    #if NUM_TIMERS > 0
+    for (uint8_t i = 0; i < NUM_TIMERS; i++)
+    {
+        pVarMap[index++] = &timer[i].fVal;
+    }
+    #endif
+
+    #if HAS_IGNITION
+    pVarMap[index++] = &ignition.fIgnition;
+    pVarMap[index++] = &ignition.fStarter;
+    pVarMap[index++] = &ignition.fState;
     #endif
 
     //VarMap size must match the expected size

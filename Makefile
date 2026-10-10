@@ -156,6 +156,7 @@ CPPSRC = $(ALLCPPSRC) \
 				 functions/counter.cpp \
 				 functions/flasher.cpp \
 				 functions/input.cpp \
+				 functions/timer.cpp \
 				 functions/virtual_input.cpp \
 				 utils/crc.cpp \
 				 utils/dbc.cpp \
