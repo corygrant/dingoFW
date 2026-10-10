@@ -6,6 +6,8 @@
 #include "can_outputs.h"
 #include "counter.h"
 #include "condition.h"
+#include "timer.h"
+#include "can_message.h"
 #include "flasher.h"
 #include "virtual_input.h"
 #if NUM_OUTPUTS > 0
@@ -16,6 +18,9 @@
 #endif
 #if HAS_STARTER_DISABLE > 0
 #include "starter.h"
+#endif
+#if HAS_IGNITION > 0
+#include "ignition.h"
 #endif
 #if NUM_KEYPADS > 0
 #include "keypad/keypad.h"
@@ -37,6 +42,12 @@ extern VirtualInput virtIn[NUM_VIRT_INPUTS];
 extern Flasher flasher[NUM_FLASHERS];
 extern Counter counter[NUM_COUNTERS];
 extern Condition condition[NUM_CONDITIONS];
+#if NUM_TIMERS > 0
+extern Timer timer[NUM_TIMERS];
+#endif
+#if NUM_CAN_MESSAGES > 0
+extern CanMessage canMsg[NUM_CAN_MESSAGES];
+#endif
 #if NUM_OUTPUTS > 0
 extern Profet pf[NUM_OUTPUTS];
 #endif
@@ -45,6 +56,9 @@ extern Wiper wiper;
 #endif
 #if HAS_STARTER_DISABLE
 extern Starter starter;
+#endif
+#if HAS_IGNITION
+extern Ignition ignition;
 #endif
 #if NUM_KEYPADS > 0
 extern Keypad keypad[NUM_KEYPADS];
@@ -79,6 +93,12 @@ void ApplyAllConfig()
     ApplyConfig(Flasher::nBaseIndex);
     ApplyConfig(Counter::nBaseIndex);
     ApplyConfig(Condition::nBaseIndex);
+    #if NUM_TIMERS > 0
+    ApplyConfig(Timer::nBaseIndex);
+    #endif
+    #if NUM_CAN_MESSAGES > 0
+    ApplyConfig(CanMessage::nBaseIndex);
+    #endif
     #if NUM_OUTPUTS > 0
     ApplyConfig(Profet::nBaseIndex);
     #endif
@@ -87,6 +107,9 @@ void ApplyAllConfig()
     #endif
     #if HAS_STARTER_DISABLE
     ApplyConfig(Starter::nBaseIndex);
+    #endif
+    #if HAS_IGNITION
+    ApplyConfig(Ignition::nBaseIndex);
     #endif
     #if NUM_KEYPADS > 0
     ApplyConfig(Keypad::nBaseIndex);
@@ -152,6 +175,22 @@ void ApplyConfig(uint16_t nIndex)
             condition[i].SetConfig(&stConfig.stCondition[i]);
     }
 
+    #if NUM_TIMERS > 0
+    if (nBaseIndex == Timer::nBaseIndex)
+    {
+        for (uint8_t i = 0; i < NUM_TIMERS; i++)
+            timer[i].SetConfig(&stConfig.stTimer[i]);
+    }
+    #endif
+
+    #if NUM_CAN_MESSAGES > 0
+    if (nBaseIndex == CanMessage::nBaseIndex)
+    {
+        for (uint8_t i = 0; i < NUM_CAN_MESSAGES; i++)
+            canMsg[i].SetConfig(&stConfig.stCanMessage[i]);
+    }
+    #endif
+
     #if NUM_OUTPUTS > 0
     if (nBaseIndex == Profet::nBaseIndex)
     {
@@ -193,6 +232,13 @@ void ApplyConfig(uint16_t nIndex)
     if (nBaseIndex == Starter::nBaseIndex)
     {
         starter.SetConfig(&stConfig.stStarter);
+    }
+    #endif
+
+    #if HAS_IGNITION
+    if (nBaseIndex == Ignition::nBaseIndex)
+    {
+        ignition.SetConfig(&stConfig.stIgnition);
     }
     #endif
 

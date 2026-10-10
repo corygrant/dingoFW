@@ -159,6 +159,38 @@ enum class InputPull : uint8_t
 };
 
 //=============================================================================
+// Timer
+//=============================================================================
+enum class TimerMode : uint8_t
+{
+    OnDelay,     // Output turns on after the input has been on for the set time
+    OffDelay,    // Output follows the input on, stays on for the set time after it goes off
+    PulseRetrig, // Every rising edge starts a pulse of the set length, retriggering it
+    PulseOneShot // A rising edge starts a pulse, further edges are ignored until it ends
+};
+
+//=============================================================================
+// Ignition
+//=============================================================================
+enum class IgnitionMode : uint8_t
+{
+    // Key held in the ON position powers the ignition, a separate input is the
+    // key's momentary START position
+    KeySwitch,
+    // One press of the button toggles the ignition. Pressed while the start
+    // condition input is held, it also cranks
+    StartButton
+};
+
+enum class IgnitionState : uint8_t
+{
+    Off,
+    Ignition,
+    Cranking,
+    Running
+};
+
+//=============================================================================
 // Output (Profet)
 //=============================================================================
 enum class ProfetModel : uint8_t
