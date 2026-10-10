@@ -204,6 +204,10 @@
     {0x1B00, 4, &stConfig.stIgnition.nEngineRunInput, &stConfigTemp.stIgnition.nEngineRunInput, ParamType::UInt16, 0, 0, VAR_MAP_SIZE - 1}, \
     {0x1B00, 5, &stConfig.stIgnition.nStopInput,      &stConfigTemp.stIgnition.nStopInput,      ParamType::UInt16, 0, 0, VAR_MAP_SIZE - 1}, \
     {0x1B00, 6, &stConfig.stIgnition.nMaxCrankTime,   &stConfigTemp.stIgnition.nMaxCrankTime,   ParamType::UInt32, 10000, 500, 30000}
+
+// One role per output, subindex 0x30 + output index
+#define IGNITION_OUTPUT_PARAMS(i) \
+    {0x1B00, 0x30 + (i), &stConfig.stIgnition.eOutputRole[i], &stConfigTemp.stIgnition.eOutputRole[i], ParamType::Enum, static_cast<uint32_t>(IgnitionOutputRole::None), 0, 4}
 #endif
 
 //=============================================================================

@@ -190,6 +190,16 @@ enum class IgnitionState : uint8_t
     Running
 };
 
+// What the ignition does with an output it has been given
+enum class IgnitionOutputRole : uint8_t
+{
+    None,      // Not controlled by the ignition, the output's own input applies
+    Ignition,  // On whenever the ignition is on, cranking included
+    Accessory, // Like Ignition, but dropped while cranking
+    Dash,      // On with the ignition
+    Starter    // On only while cranking
+};
+
 //=============================================================================
 // Output (Profet)
 //=============================================================================

@@ -15,6 +15,11 @@
 // any case after nMaxCrankTime. After that limit the start request has to be
 // released before the starter can be engaged again, so a stuck key or a held
 // button cannot crank continuously.
+//
+// Outputs are handed to the ignition by role instead of by input: Ignition
+// outputs are on whenever the ignition is, Accessory outputs drop out while
+// cranking, Starter outputs are on only while cranking and Dash outputs follow
+// the ignition.
 //=============================================================================
 
 void Ignition::Update()
@@ -25,6 +30,8 @@ void Ignition::Update()
         eState = IgnitionState::Off;
         fIgnition = 0.0f;
         fStarter = 0.0f;
+        fAccessory = 0.0f;
+        fDash = 0.0f;
         fState = static_cast<float>(IgnitionState::Off);
         return;
     }
@@ -49,6 +56,8 @@ void Ignition::Update()
         eState = IgnitionState::Off;
         fIgnition = 0.0f;
         fStarter = 0.0f;
+        fAccessory = 0.0f;
+        fDash = 0.0f;
         fState = static_cast<float>(eState);
         return;
     }
@@ -169,7 +178,26 @@ void Ignition::Update()
 
     fIgnition = (eState != IgnitionState::Off) ? 1.0f : 0.0f;
     fStarter = (eState == IgnitionState::Cranking) ? 1.0f : 0.0f;
+    fAccessory = ((eState == IgnitionState::Ignition) || (eState == IgnitionState::Running)) ? 1.0f : 0.0f;
+    fDash = fIgnition;
     fState = static_cast<float>(eState);
 
     bLastIgnIn = bIgnIn;
+}
+
+float *Ignition::GetRoleVar(IgnitionOutputRole eRole)
+{
+    switch (eRole)
+    {
+    case IgnitionOutputRole::Ignition:
+        return &fIgnition;
+    case IgnitionOutputRole::Accessory:
+        return &fAccessory;
+    case IgnitionOutputRole::Dash:
+        return &fDash;
+    case IgnitionOutputRole::Starter:
+        return &fStarter;
+    default:
+        return nullptr;
+    }
 }

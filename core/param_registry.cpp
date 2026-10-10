@@ -58,6 +58,7 @@ const ParamInfo stParams[] = {
     #if HAS_IGNITION > 0
     // Ignition (0x1B00)
     IGNITION_PARAMS(),
+    ALL_IGNITION_OUTPUT_PARAMS,
     #endif
 
     #if NUM_CAN_MESSAGES > 0

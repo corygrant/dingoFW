@@ -531,6 +531,12 @@ void InitVarMap()
     }
     #endif
 
+    // Added after the CAN messages, for the same reason as above
+    #if HAS_IGNITION
+    pVarMap[index++] = &ignition.fAccessory;
+    pVarMap[index++] = &ignition.fDash;
+    #endif
+
     //VarMap size must match the expected size
     if (index != VAR_MAP_SIZE)
         Error::SetFatalError(FatalErrorType::ErrVarMap, MsgSrc::Init);

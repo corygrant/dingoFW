@@ -47,7 +47,7 @@
 //Battery voltage
 #define VAR_MAP_SYS_VARS 5
 #define VAR_MAP_WIPER_VARS 6
-#define VAR_MAP_IGNITION_VARS 3
+#define VAR_MAP_IGNITION_VARS 5
 
 #define VAR_MAP_SIZE ( \
     VAR_MAP_SYS_VARS + \

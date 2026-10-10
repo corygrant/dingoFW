@@ -14,6 +14,8 @@ struct Config_Ignition{
   uint16_t nEngineRunInput; //Engine is running, normally a CAN input via a condition
   uint16_t nStopInput;      //Optional, forces everything off while held
   uint32_t nMaxCrankTime;   //ms, hard limit on how long the starter may be engaged
+
+  IgnitionOutputRole eOutputRole[NUM_OUTPUTS];
 };
 
 class Ignition
@@ -35,9 +37,14 @@ public:
 
     void Update();
 
+    // The variable an output with this role is switched from
+    float *GetRoleVar(IgnitionOutputRole eRole);
+
     float fIgnition; //Ignition power is on, in every state except Off
     float fStarter;  //Starter motor should be engaged
     float fState;    //IgnitionState, for the var map and diagnostics
+    float fAccessory;
+    float fDash;
 
 private:
     Config_Ignition* pConfig;
