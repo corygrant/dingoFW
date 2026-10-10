@@ -259,6 +259,12 @@ void UpdateCanFilters()
             }
         }
         #endif
+
+        #if HAS_IGNITION
+        const Config_Ignition &ign = stConfig.stIgnition;
+        if (ign.bEnabled && (ign.eButtonSource == IgnitionSource::CanFrame))
+            Add(ign.nButtonId, ign.nButtonIDE == 1);
+        #endif
     }
 
     // Filtering disabled, or more IDs than filter slots - accept everything rather than drop frames
