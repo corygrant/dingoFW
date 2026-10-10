@@ -1,6 +1,19 @@
 #include "mcu_utils.h"
 #include "hal.h"
 
+// Just below the bootloader magic at 0x2001FFF0, at the top of RAM where the
+// startup code does not clear anything
+#define WAKE_RECORD_ADDR 0x2001FFDC
+#define WAKE_RECORD_MAGIC 0x57414B45 // "WAKE"
+
+struct StoredWakeRecord
+{
+    uint32_t nMagic;
+    WakeRecord stRecord;
+};
+
+static volatile StoredWakeRecord *const pStoredWake = (volatile StoredWakeRecord *)WAKE_RECORD_ADDR;
+
 void EnterStopMode()
 {
     PWR->CR &= ~PWR_CR_PDDS;	            // cleared PDDS means stop mode (not standby) 
@@ -12,7 +25,13 @@ void EnterStopMode()
     
     __WFI();
 
-    // Resume here after wakeup
+    // Resume here after wakeup. Interrupts are still masked, so whatever woke
+    // the MCU is still pending - note it down for the next boot.
+    pStoredWake->stRecord.nExtiPending = EXTI->PR;
+    for (uint8_t i = 0; i < 3; i++)
+        pStoredWake->stRecord.nIrqPending[i] = NVIC->ISPR[i];
+    pStoredWake->nMagic = WAKE_RECORD_MAGIC;
+
     NVIC_SystemReset();
 }
 
@@ -27,4 +46,18 @@ void EnterStopMode()
     NVIC_SystemReset();
     
     // No further code will execute after this point
+}
+
+bool TakeWakeRecord(WakeRecord *pRecord)
+{
+    if (pStoredWake->nMagic != WAKE_RECORD_MAGIC)
+        return false;
+
+    pRecord->nExtiPending = pStoredWake->stRecord.nExtiPending;
+    for (uint8_t i = 0; i < 3; i++)
+        pRecord->nIrqPending[i] = pStoredWake->stRecord.nIrqPending[i];
+
+    // Once only, a reset for any other reason must not report it again
+    pStoredWake->nMagic = 0;
+    return true;
 }

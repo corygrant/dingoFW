@@ -109,6 +109,7 @@ void Ignition::Update()
     }
 
     const uint32_t nNow = SYS_TIME;
+    nNowCache = nNow;
 
     // First pass only samples the inputs. A button already held at power up
     // would otherwise look like a press, and the crank lockout makes sure a key
@@ -556,4 +557,33 @@ float *Ignition::GetRoleVar(IgnitionOutputRole eRole)
     default:
         return nullptr;
     }
+}
+
+uint8_t Ignition::GetMasterLink() const
+{
+    if (pConfig->eRole != IgnitionRole::Follower)
+        return 0;
+
+    return MasterLinkOk(nNowCache) ? 1 : 2;
+}
+
+uint16_t Ignition::GetSleepCountdown() const
+{
+    if ((eSleepStatus != IgnitionSleepStatus::Counting) || (pConfig->nSleepDelay == 0))
+        return 0;
+
+    const uint32_t nElapsed = nNowCache - nIdleSince;
+    if (nElapsed >= pConfig->nSleepDelay)
+        return 0;
+
+    // Round up, so it reads 1 until the very end rather than 0 for the last second
+    return static_cast<uint16_t>((pConfig->nSleepDelay - nElapsed + 999) / 1000);
+}
+
+uint8_t Ignition::GetOutputFlags() const
+{
+    return ((fIgnition > 0.5f) ? 0x01 : 0) |
+           ((fAccessory > 0.5f) ? 0x02 : 0) |
+           ((fDash > 0.5f) ? 0x04 : 0) |
+           ((fStarter > 0.5f) ? 0x08 : 0);
 }

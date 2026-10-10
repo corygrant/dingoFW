@@ -133,6 +133,10 @@ static chibios_rt::ThreadReference slowThreadRef;
 
 void InitDevice()
 {
+    #if CAN_SLEEP
+    CaptureWakeSource(); // Before anything else reuses the top of RAM
+    #endif
+
     #if HAS_SE_LEDS
     Error::Initialize(&statusLed, &errorLed);
     #endif

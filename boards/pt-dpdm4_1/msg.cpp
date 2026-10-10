@@ -501,3 +501,25 @@ CANTxMsg TxMsg27()
 
     return stMsg;
 }
+
+CANTxMsg TxMsg28()
+{
+    CANTxMsg stMsg;
+    //=======================================================
+    // Build Msg 28 (Ignition status)
+    //=======================================================
+    stMsg.frame.IDE = CAN_IDE_STD;
+    stMsg.frame.SID = stConfig.stDevice.nBaseId + CYCLIC_TX_OFFSET + 28;
+    stMsg.frame.DLC = 8;
+    stMsg.frame.data8[0] = (GetIgnitionRole() << 4) + GetIgnitionState();
+    stMsg.frame.data8[1] = GetIgnitionDashState();
+    stMsg.frame.data8[2] = GetIgnitionSleepStatus();
+    stMsg.frame.data8[3] = GetIgnitionMasterLink();
+    stMsg.frame.data16[2] = GetIgnitionSleepCountdown(); // Seconds
+    stMsg.frame.data8[6] = GetIgnitionOutputFlags();
+    stMsg.frame.data8[7] = GetWakeSource();
+
+    stMsg.bSend = GetIgnitionEnable();
+
+    return stMsg;
+}

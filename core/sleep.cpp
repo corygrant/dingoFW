@@ -23,6 +23,8 @@ extern Profet pf[NUM_OUTPUTS];
 extern Ignition ignition;
 #endif
 
+static uint8_t nLastWakeSource;
+
 bool CheckEnterSleep()
 {
     bool bEnterSleep = false;
@@ -159,6 +161,63 @@ void EnterSleep()
     NVIC_ClearPendingIRQ(EXTI15_10_IRQn);
 
     EnterStopMode();
+}
+
+static uint32_t PadMask(ioline_t line)
+{
+    return 1UL << PAL_PAD(line);
+}
+
+void CaptureWakeSource()
+{
+    WakeRecord rec;
+    if (!TakeWakeRecord(&rec))
+    {
+        nLastWakeSource = 0;
+        return;
+    }
+
+    // EXTI line n serves pin n of whichever port is mapped to it
+    uint32_t nCan = PadMask(LINE_CAN_RX);
+    uint32_t nUsb = PadMask(LINE_USB_DP) | PadMask(LINE_USB_DM);
+    uint32_t nDigIn = 0;
+    for (uint8_t i = 0; i < NUM_DIG_INPUTS; i++)
+        nDigIn |= PadMask(digIn[i].GetLine());
+
+    const uint32_t nExti = rec.nExtiPending & 0xFFFF;
+    uint8_t nSource = WAKE_SRC_FROM_SLEEP;
+    if (nExti & nCan)
+        nSource |= WAKE_SRC_CAN;
+    if (nExti & nDigIn)
+        nSource |= WAKE_SRC_DIG_IN;
+    if (nExti & nUsb)
+        nSource |= WAKE_SRC_USB;
+    if (nExti & ~(nCan | nUsb | nDigIn))
+        nSource |= WAKE_SRC_OTHER_LINE;
+
+    // Any interrupt pending other than the EXTI ones also ends a stop. Only
+    // worth reporting when no wake line fired: once awake the clocks restart
+    // and the OS timer is pending again before the record is written.
+    if (nSource != WAKE_SRC_FROM_SLEEP)
+    {
+        nLastWakeSource = nSource;
+        return;
+    }
+
+    uint32_t nIrq[3] = {rec.nIrqPending[0], rec.nIrqPending[1], rec.nIrqPending[2]};
+    const IRQn_Type eExtiIrqs[] = {EXTI0_IRQn, EXTI1_IRQn, EXTI2_IRQn, EXTI3_IRQn,
+                                   EXTI4_IRQn, EXTI9_5_IRQn, EXTI15_10_IRQn};
+    for (IRQn_Type irq : eExtiIrqs)
+        nIrq[irq / 32] &= ~(1UL << (irq % 32));
+    if (nIrq[0] | nIrq[1] | nIrq[2])
+        nSource |= WAKE_SRC_INTERRUPT;
+
+    nLastWakeSource = nSource;
+}
+
+uint8_t GetLastWakeSource()
+{
+    return nLastWakeSource;
 }
 
 #endif

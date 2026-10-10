@@ -40,6 +40,7 @@ CANTxMsg TxMsg24();
 CANTxMsg TxMsg25();
 CANTxMsg TxMsg26();
 CANTxMsg TxMsg27();
+CANTxMsg TxMsg28();
 
 [[maybe_unused]] static CANTxMsg (*TxMsgs[NUM_TX_MSGS])() = {
     TxMsg0,
@@ -69,5 +70,6 @@ CANTxMsg TxMsg27();
     TxMsg24,
     TxMsg25,
     TxMsg26,
-    TxMsg27};
+    TxMsg27,
+    TxMsg28};
 

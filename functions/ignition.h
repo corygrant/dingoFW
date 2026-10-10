@@ -74,6 +74,17 @@ public:
     bool TxQuiet() const { return (ePhase == SleepPhase::Quiet) || (ePhase == SleepPhase::Sleep); }
     bool SleepRequest() const { return ePhase == SleepPhase::Sleep; }
 
+    // Status frame
+    bool IsEnabled() const { return pConfig && pConfig->bEnabled; }
+    bool HasRun() const { return bInit; }
+    IgnitionState GetState() const { return eState; }
+    DashState GetDashState() const { return eDash; }
+    IgnitionSleepStatus GetSleepStatus() const { return eSleepStatus; }
+    IgnitionRole GetRole() const { return pConfig->eRole; }
+    uint8_t GetMasterLink() const;      // 0 = not a follower, 1 = ok, 2 = lost
+    uint16_t GetSleepCountdown() const; // Seconds left, 0 when not counting
+    uint8_t GetOutputFlags() const;
+
     float fIgnition; //Ignition power is on, in every state except Off
     float fStarter;  //Starter motor should be engaged
     float fState;    //IgnitionState, for the var map and diagnostics
@@ -145,4 +156,5 @@ private:
     IgnitionSleepStatus eSleepStatus;
     uint32_t nIdleSince;
     uint32_t nPhaseTime;
+    uint32_t nNowCache;
 };
