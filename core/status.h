@@ -49,6 +49,16 @@ float GetCounterVal(uint8_t nCounter);
 
 uint32_t GetConditions();
 
+bool GetIgnitionEnable();
+uint8_t GetIgnitionState();
+uint8_t GetIgnitionRole();
+uint8_t GetIgnitionDashState();
+uint8_t GetIgnitionSleepStatus();
+uint8_t GetIgnitionMasterLink();
+uint16_t GetIgnitionSleepCountdown();
+uint8_t GetIgnitionOutputFlags();
+uint8_t GetWakeSource();
+
 bool GetKeypadEnable(uint8_t nKeypad);
 uint32_t GetKeypadButtons(uint8_t nKeypad);
 float GetKeypadDialVal(uint8_t nKeypad, uint8_t nDial);

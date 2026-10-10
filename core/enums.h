@@ -159,6 +159,84 @@ enum class InputPull : uint8_t
 };
 
 //=============================================================================
+// Timer
+//=============================================================================
+enum class TimerMode : uint8_t
+{
+    OnDelay,     // Output turns on after the input has been on for the set time
+    OffDelay,    // Output follows the input on, stays on for the set time after it goes off
+    PulseRetrig, // Every rising edge starts a pulse of the set length, retriggering it
+    PulseOneShot // A rising edge starts a pulse, further edges are ignored until it ends
+};
+
+//=============================================================================
+// Ignition
+//=============================================================================
+enum class IgnitionMode : uint8_t
+{
+    // Key held in the ON position powers the ignition, a separate input is the
+    // key's momentary START position
+    KeySwitch,
+    // One press of the button toggles the ignition. Pressed while the start
+    // condition input is held, it also cranks
+    StartButton
+};
+
+enum class IgnitionState : uint8_t
+{
+    Off,
+    Ignition,
+    Cranking,
+    Running
+};
+
+// Several devices on one bus share one ignition: the master owns the button and
+// broadcasts its state, followers switch their outputs from that broadcast
+enum class IgnitionRole : uint8_t
+{
+    Standalone,
+    Master,
+    Follower
+};
+
+enum class IgnitionSource : uint8_t
+{
+    Variable, // Any var map entry, usually a digital input
+    CanFrame  // A bit in a CAN frame, decoded by the ignition itself
+};
+
+// What the ignition does with an output it has been given
+enum class IgnitionOutputRole : uint8_t
+{
+    None,      // Not controlled by the ignition, the output's own input applies
+    Ignition,  // On whenever the ignition is on, cranking included
+    Accessory, // Like Ignition, but dropped while cranking
+    Dash,      // On with the ignition and through the dash shutdown sequence
+    Starter    // On only while cranking
+};
+
+enum class DashState : uint8_t
+{
+    Off,
+    On,
+    Grace,   // Ignition off, waiting in case it comes straight back on
+    Halting, // Shutdown frame sent, waiting for the dash to finish shutting down
+    Restart  // Dash was halted, kept unpowered long enough to boot cleanly again
+};
+
+enum class IgnitionSleepStatus : uint8_t
+{
+    Disabled,    // Ignition does not manage sleep
+    Awake,       // Ignition or door on
+    Counting,
+    Following,   // Follower, sleeps when the master does
+    WaitingDash, // Delay over, dash shutdown still running
+    BlockedUsb,  // Would sleep, USB is connected
+    Quiet,       // All CAN transmit stopped, about to sleep
+    Sleep
+};
+
+//=============================================================================
 // Output (Profet)
 //=============================================================================
 enum class ProfetModel : uint8_t

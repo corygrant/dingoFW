@@ -25,4 +25,5 @@ from .build_msg_23 import build_msg_23
 from .build_msg_24 import build_msg_24
 from .build_msg_25 import build_msg_25
 from .build_msg_26 import build_msg_26
+from .build_msg_27 import build_msg_27
 from .build_db import build_db

@@ -53,6 +53,9 @@ extern Wiper wiper;
 #if HAS_STARTER_DISABLE
 extern Starter starter;
 #endif
+#if HAS_IGNITION
+extern Ignition ignition;
+#endif
 #if NUM_KEYPADS > 0
 extern Keypad keypad[NUM_KEYPADS];
 #endif

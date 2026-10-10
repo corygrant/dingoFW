@@ -287,6 +287,24 @@ BO_ 250 dingoPdmMaxMsg26: 8 Vector__XXX
  SG_ Keypad1Dial_2 : 40|16@1+ (1,0) [0|0] "" Vector__XXX
  SG_ Keypad1Dial_1 : 24|16@1+ (1,0) [0|0] "" Vector__XXX
 
+BO_ 251 dingoPdmMaxMsg27: 8 Vector__XXX
+ SG_ WokeFromSleep : 63|1@1+ (1,0) [0|1] "" Vector__XXX
+ SG_ WakeInterrupt : 60|1@1+ (1,0) [0|1] "" Vector__XXX
+ SG_ WakeOtherLine : 59|1@1+ (1,0) [0|1] "" Vector__XXX
+ SG_ WakeUsb : 58|1@1+ (1,0) [0|1] "" Vector__XXX
+ SG_ WakeDigitalInput : 57|1@1+ (1,0) [0|1] "" Vector__XXX
+ SG_ WakeCan : 56|1@1+ (1,0) [0|1] "" Vector__XXX
+ SG_ StarterOut : 51|1@1+ (1,0) [0|1] "" Vector__XXX
+ SG_ DashOut : 50|1@1+ (1,0) [0|1] "" Vector__XXX
+ SG_ AccessoryOut : 49|1@1+ (1,0) [0|1] "" Vector__XXX
+ SG_ IgnitionOut : 48|1@1+ (1,0) [0|1] "" Vector__XXX
+ SG_ SleepCountdown : 32|16@1+ (1,0) [0|65535] "s" Vector__XXX
+ SG_ MasterLink : 24|8@1+ (1,0) [0|255] "" Vector__XXX
+ SG_ SleepStatus : 16|8@1+ (1,0) [0|255] "" Vector__XXX
+ SG_ DashState : 8|8@1+ (1,0) [0|255] "" Vector__XXX
+ SG_ IgnitionRole : 4|4@1+ (1,0) [0|15] "" Vector__XXX
+ SG_ IgnitionState : 0|4@1+ (1,0) [0|15] "" Vector__XXX
+
 
 
 
@@ -302,6 +320,11 @@ VAL_ 227 OutputState_4 0 "Off" 1 "On" 2 "Overcurrent" 3 "Fault" ;
 VAL_ 227 OutputState_3 0 "Off" 1 "On" 2 "Overcurrent" 3 "Fault" ;
 VAL_ 227 OutputState_2 0 "Off" 1 "On" 2 "Overcurrent" 3 "Fault" ;
 VAL_ 227 OutputState_1 0 "Off" 1 "On" 2 "Overcurrent" 3 "Fault" ;
+VAL_ 251 MasterLink 0 "NotFollower" 1 "Ok" 2 "Lost" ;
+VAL_ 251 SleepStatus 0 "Disabled" 1 "Awake" 2 "Counting" 3 "Following" 4 "WaitingDash" 5 "BlockedUsb" 6 "Quiet" 7 "Sleep" ;
+VAL_ 251 DashState 0 "Off" 1 "On" 2 "Grace" 3 "Halting" 4 "Restart" ;
+VAL_ 251 IgnitionRole 0 "Standalone" 1 "Master" 2 "Follower" ;
+VAL_ 251 IgnitionState 0 "Off" 1 "Ignition" 2 "Cranking" 3 "Running" ;
 
 
 

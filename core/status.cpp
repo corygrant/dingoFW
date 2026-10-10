@@ -16,6 +16,12 @@
 #if HAS_STARTER_DISABLE > 0
 #include "starter.h"
 #endif
+#if HAS_IGNITION > 0
+#include "ignition.h"
+#endif
+#if CAN_SLEEP
+#include "sleep.h"
+#endif
 #if NUM_KEYPADS > 0
 #include "keypad/keypad.h"
 #endif
@@ -433,4 +439,42 @@ bool GetAnyAnalogInputEnable()
     }
     return false;
 }
+#endif
+
+// Boards without an ignition still build the status frame, it is just never sent
+bool GetIgnitionEnable()
+{
+    #if HAS_IGNITION
+    // Not before its first update, the frame would carry the defaults
+    return stConfig.stIgnition.bEnabled && ignition.HasRun();
+    #else
+    return false;
+    #endif
+}
+
+uint8_t GetWakeSource()
+{
+    #if CAN_SLEEP
+    return GetLastWakeSource();
+    #else
+    return 0;
+    #endif
+}
+
+#if HAS_IGNITION
+uint8_t GetIgnitionState() { return static_cast<uint8_t>(ignition.GetState()); }
+uint8_t GetIgnitionRole() { return static_cast<uint8_t>(stConfig.stIgnition.eRole); }
+uint8_t GetIgnitionDashState() { return static_cast<uint8_t>(ignition.GetDashState()); }
+uint8_t GetIgnitionSleepStatus() { return static_cast<uint8_t>(ignition.GetSleepStatus()); }
+uint8_t GetIgnitionMasterLink() { return ignition.GetMasterLink(); }
+uint16_t GetIgnitionSleepCountdown() { return ignition.GetSleepCountdown(); }
+uint8_t GetIgnitionOutputFlags() { return ignition.GetOutputFlags(); }
+#else
+uint8_t GetIgnitionState() { return 0; }
+uint8_t GetIgnitionRole() { return 0; }
+uint8_t GetIgnitionDashState() { return 0; }
+uint8_t GetIgnitionSleepStatus() { return 0; }
+uint8_t GetIgnitionMasterLink() { return 0; }
+uint16_t GetIgnitionSleepCountdown() { return 0; }
+uint8_t GetIgnitionOutputFlags() { return 0; }
 #endif

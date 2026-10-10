@@ -15,6 +15,8 @@
 #include "flasher.h"
 #include "counter.h"
 #include "condition.h"
+#include "timer.h"
+#include "can_message.h"
 #include "mailbox.h"
 #include "msg.h"
 #include "error.h"
@@ -26,6 +28,9 @@
 #endif
 #if HAS_STARTER_DISABLE > 0
 #include "starter.h"
+#endif
+#if HAS_IGNITION > 0
+#include "ignition.h"
 #endif
 #if HAS_USB
 #include "usb.h"
@@ -43,11 +48,20 @@ VirtualInput virtIn[NUM_VIRT_INPUTS];
 Flasher flasher[NUM_FLASHERS];
 Counter counter[NUM_COUNTERS];
 Condition condition[NUM_CONDITIONS];
+#if NUM_TIMERS > 0
+Timer timer[NUM_TIMERS];
+#endif
+#if NUM_CAN_MESSAGES > 0
+CanMessage canMsg[NUM_CAN_MESSAGES];
+#endif
 #if HAS_WIPERS > 0
 Wiper wiper;
 #endif
 #if HAS_STARTER_DISABLE > 0
 Starter starter;
+#endif
+#if HAS_IGNITION > 0
+Ignition ignition;
 #endif
 #if NUM_KEYPADS > 0
 Keypad keypad[NUM_KEYPADS];
@@ -119,6 +133,10 @@ static chibios_rt::ThreadReference slowThreadRef;
 
 void InitDevice()
 {
+    #if CAN_SLEEP
+    CaptureWakeSource(); // Before anything else reuses the top of RAM
+    #endif
+
     #if HAS_SE_LEDS
     Error::Initialize(&statusLed, &errorLed);
     #endif
@@ -268,6 +286,10 @@ void CyclicUpdate()
         for (uint8_t i = 0; i < NUM_KEYPADS; i++)
             keypad[i].CheckMsg(rxMsg);
         #endif
+
+        #if HAS_IGNITION
+        ignition.CheckMsg(rxMsg);
+        #endif
     }
 
     //=========================================================================
@@ -286,6 +308,13 @@ void CyclicUpdate()
     #if NUM_CAN_INPUTS > 0
     for (uint8_t i = 0; i < NUM_CAN_INPUTS; i++)
         canIn[i].CheckTimeout();
+    #endif
+
+    #if HAS_IGNITION
+    ignition.Update();
+    // Stops every frame except replies to dingoConfig while the ignition waits to sleep.
+    // EnterSleep() sets it too, which must not be undone here.
+    SetCanTxQuiet(ignition.TxQuiet() || (eState == DeviceState::Sleep));
     #endif
 
     #if NUM_VIRT_INPUTS > 0
@@ -314,6 +343,12 @@ void CyclicUpdate()
     #if NUM_CONDITIONS > 0    
     for (uint8_t i = 0; i < NUM_CONDITIONS; i++)
         condition[i].Update();
+    #endif
+
+    // After the conditions, so a timer can be driven by one
+    #if NUM_TIMERS > 0
+    for (uint8_t i = 0; i < NUM_TIMERS; i++)
+        timer[i].Update();
     #endif
 
     #if NUM_KEYPADS > 0
@@ -356,6 +391,11 @@ void CyclicUpdate()
 
     #if NUM_CAN_OUTPUTS > 0
     canOutputs.Update();
+    #endif
+
+    #if NUM_CAN_MESSAGES > 0
+    for (uint8_t i = 0; i < NUM_CAN_MESSAGES; i++)
+        canMsg[i].Update();
     #endif
 
     #if HAS_NEOPIXELS
@@ -477,6 +517,35 @@ void InitVarMap()
             pVarMap[index++] = &keypad[i].fAnalogVal[j];
         }
     }
+    #endif
+
+    // Timers and ignition are added last on purpose: appending keeps every
+    // existing variable index the same, so configs written before these
+    // existed still point at the same variables.
+    #if NUM_TIMERS > 0
+    for (uint8_t i = 0; i < NUM_TIMERS; i++)
+    {
+        pVarMap[index++] = &timer[i].fVal;
+    }
+    #endif
+
+    #if HAS_IGNITION
+    pVarMap[index++] = &ignition.fIgnition;
+    pVarMap[index++] = &ignition.fStarter;
+    pVarMap[index++] = &ignition.fState;
+    #endif
+
+    #if NUM_CAN_MESSAGES > 0
+    for (uint8_t i = 0; i < NUM_CAN_MESSAGES; i++)
+    {
+        pVarMap[index++] = &canMsg[i].fVal;
+    }
+    #endif
+
+    // Added after the CAN messages, for the same reason as above
+    #if HAS_IGNITION
+    pVarMap[index++] = &ignition.fAccessory;
+    pVarMap[index++] = &ignition.fDash;
     #endif
 
     //VarMap size must match the expected size
