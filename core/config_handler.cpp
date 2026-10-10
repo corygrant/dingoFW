@@ -6,6 +6,7 @@
 #include "can_outputs.h"
 #include "counter.h"
 #include "condition.h"
+#include "timer.h"
 #include "flasher.h"
 #include "virtual_input.h"
 #if NUM_OUTPUTS > 0
@@ -37,6 +38,9 @@ extern VirtualInput virtIn[NUM_VIRT_INPUTS];
 extern Flasher flasher[NUM_FLASHERS];
 extern Counter counter[NUM_COUNTERS];
 extern Condition condition[NUM_CONDITIONS];
+#if NUM_TIMERS > 0
+extern Timer timer[NUM_TIMERS];
+#endif
 #if NUM_OUTPUTS > 0
 extern Profet pf[NUM_OUTPUTS];
 #endif
@@ -79,6 +83,9 @@ void ApplyAllConfig()
     ApplyConfig(Flasher::nBaseIndex);
     ApplyConfig(Counter::nBaseIndex);
     ApplyConfig(Condition::nBaseIndex);
+    #if NUM_TIMERS > 0
+    ApplyConfig(Timer::nBaseIndex);
+    #endif
     #if NUM_OUTPUTS > 0
     ApplyConfig(Profet::nBaseIndex);
     #endif
@@ -151,6 +158,14 @@ void ApplyConfig(uint16_t nIndex)
         for (uint8_t i = 0; i < NUM_CONDITIONS; i++)
             condition[i].SetConfig(&stConfig.stCondition[i]);
     }
+
+    #if NUM_TIMERS > 0
+    if (nBaseIndex == Timer::nBaseIndex)
+    {
+        for (uint8_t i = 0; i < NUM_TIMERS; i++)
+            timer[i].SetConfig(&stConfig.stTimer[i]);
+    }
+    #endif
 
     #if NUM_OUTPUTS > 0
     if (nBaseIndex == Profet::nBaseIndex)

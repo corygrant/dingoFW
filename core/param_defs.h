@@ -181,6 +181,18 @@
 #endif
 
 //=============================================================================
+// Timer Parameters - Base 0x1A00
+//=============================================================================
+#if NUM_TIMERS > 0
+#define TIMER_PARAMS(i) \
+    {0x1A00 + (i), 0, &stConfig.stTimer[i].bEnabled,    &stConfigTemp.stTimer[i].bEnabled,    ParamType::Bool,   0, 0, 1}, \
+    {0x1A00 + (i), 1, &stConfig.stTimer[i].nInput,      &stConfigTemp.stTimer[i].nInput,      ParamType::UInt16, 0, 0, VAR_MAP_SIZE - 1}, \
+    {0x1A00 + (i), 2, &stConfig.stTimer[i].nResetInput, &stConfigTemp.stTimer[i].nResetInput, ParamType::UInt16, 0, 0, VAR_MAP_SIZE - 1}, \
+    {0x1A00 + (i), 3, &stConfig.stTimer[i].eMode,       &stConfigTemp.stTimer[i].eMode,       ParamType::Enum,   static_cast<uint32_t>(TimerMode::OnDelay), 0, 3}, \
+    {0x1A00 + (i), 4, &stConfig.stTimer[i].nTime,       &stConfigTemp.stTimer[i].nTime,       ParamType::UInt32, 1000, 0, 600000}
+#endif
+
+//=============================================================================
 // CAN Output Parameters - Base 0x2000
 //=============================================================================
 #define CAN_OUTPUT_PARAMS(i) \

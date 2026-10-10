@@ -15,6 +15,7 @@
 #include "flasher.h"
 #include "counter.h"
 #include "condition.h"
+#include "timer.h"
 #include "mailbox.h"
 #include "msg.h"
 #include "error.h"
@@ -43,6 +44,9 @@ VirtualInput virtIn[NUM_VIRT_INPUTS];
 Flasher flasher[NUM_FLASHERS];
 Counter counter[NUM_COUNTERS];
 Condition condition[NUM_CONDITIONS];
+#if NUM_TIMERS > 0
+Timer timer[NUM_TIMERS];
+#endif
 #if HAS_WIPERS > 0
 Wiper wiper;
 #endif
@@ -316,6 +320,12 @@ void CyclicUpdate()
         condition[i].Update();
     #endif
 
+    // After the conditions, so a timer can be driven by one
+    #if NUM_TIMERS > 0
+    for (uint8_t i = 0; i < NUM_TIMERS; i++)
+        timer[i].Update();
+    #endif
+
     #if NUM_KEYPADS > 0
     for (uint8_t i = 0; i < NUM_KEYPADS; i++)
         keypad[i].Update();
@@ -476,6 +486,16 @@ void InitVarMap()
         {
             pVarMap[index++] = &keypad[i].fAnalogVal[j];
         }
+    }
+    #endif
+
+    // Timers are added last on purpose: appending keeps every existing
+    // variable index the same, so configs written before they existed still
+    // point at the same variables.
+    #if NUM_TIMERS > 0
+    for (uint8_t i = 0; i < NUM_TIMERS; i++)
+    {
+        pVarMap[index++] = &timer[i].fVal;
     }
     #endif
 
