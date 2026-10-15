@@ -93,10 +93,25 @@ void EnterSleep()
         pf[i].ForceOff();
     #endif
 
-    // Let CanTxThread flush queued frames before the transceiver goes to standby
+    // Stop transmitting before the transceiver goes to standby. A frame still
+    // going out while another device on the bus falls asleep wakes it up again.
+    // Frames already in the CAN mailboxes finish during the wait below.
+    SetCanTxQuiet(true);
     chThdSleepMilliseconds(100);
 
+    // Stop the CAN controller before its pins change. Left running, it sees the
+    // RX pin taken away from it and answers with an error frame, and the error
+    // flag the other nodes send back arrives just after the transceiver went to
+    // standby - which wakes this device straight back up whenever anything else
+    // is on the bus.
+    StopCan();
+    palSetLineMode(LINE_CAN_TX, PAL_MODE_OUTPUT_PUSHPULL);
+    palSetLine(LINE_CAN_TX); // Recessive
+
     palSetLine(LINE_CAN_STANDBY); // CAN disabled
+
+    // Let the transceiver settle in standby before any wake source is armed
+    chThdSleepMilliseconds(20);
 
     // Set wakeup sources
 
@@ -122,6 +137,18 @@ void EnterSleep()
     palEnableLineEvent(LINE_USB_DP, PAL_EVENT_MODE_BOTH_EDGES | PAL_STM32_PUPDR_FLOATING);
     palSetLineMode(LINE_USB_DM, PAL_MODE_INPUT);
     palEnableLineEvent(LINE_USB_DM, PAL_EVENT_MODE_BOTH_EDGES | PAL_STM32_PUPDR_FLOATING);
+
+    // Arming a line can latch an edge from the pin changing mode. Clear those so
+    // only a real wake source ends the stop. One arriving from here on is still
+    // pending at the WFI and wakes the MCU as it should.
+    EXTI->PR = 0x0000FFFF;
+    NVIC_ClearPendingIRQ(EXTI0_IRQn);
+    NVIC_ClearPendingIRQ(EXTI1_IRQn);
+    NVIC_ClearPendingIRQ(EXTI2_IRQn);
+    NVIC_ClearPendingIRQ(EXTI3_IRQn);
+    NVIC_ClearPendingIRQ(EXTI4_IRQn);
+    NVIC_ClearPendingIRQ(EXTI9_5_IRQn);
+    NVIC_ClearPendingIRQ(EXTI15_10_IRQn);
 
     EnterStopMode();
 }
