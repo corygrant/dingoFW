@@ -181,6 +181,63 @@
 #endif
 
 //=============================================================================
+// Timer Parameters - Base 0x1A00
+//=============================================================================
+#if NUM_TIMERS > 0
+#define TIMER_PARAMS(i) \
+    {0x1A00 + (i), 0, &stConfig.stTimer[i].bEnabled,    &stConfigTemp.stTimer[i].bEnabled,    ParamType::Bool,   0, 0, 1}, \
+    {0x1A00 + (i), 1, &stConfig.stTimer[i].nInput,      &stConfigTemp.stTimer[i].nInput,      ParamType::UInt16, 0, 0, VAR_MAP_SIZE - 1}, \
+    {0x1A00 + (i), 2, &stConfig.stTimer[i].nResetInput, &stConfigTemp.stTimer[i].nResetInput, ParamType::UInt16, 0, 0, VAR_MAP_SIZE - 1}, \
+    {0x1A00 + (i), 3, &stConfig.stTimer[i].eMode,       &stConfigTemp.stTimer[i].eMode,       ParamType::Enum,   static_cast<uint32_t>(TimerMode::OnDelay), 0, 3}, \
+    {0x1A00 + (i), 4, &stConfig.stTimer[i].nTime,       &stConfigTemp.stTimer[i].nTime,       ParamType::UInt32, 1000, 0, 600000}
+#endif
+
+//=============================================================================
+// Ignition Parameters - Base 0x1B00 (single instance)
+//=============================================================================
+#if HAS_IGNITION
+#define IGNITION_PARAMS() \
+    {0x1B00, 0, &stConfig.stIgnition.bEnabled,        &stConfigTemp.stIgnition.bEnabled,        ParamType::Bool,   0, 0, 1}, \
+    {0x1B00, 1, &stConfig.stIgnition.eMode,           &stConfigTemp.stIgnition.eMode,           ParamType::Enum,   static_cast<uint32_t>(IgnitionMode::KeySwitch), 0, 1}, \
+    {0x1B00, 2, &stConfig.stIgnition.nIgnInput,       &stConfigTemp.stIgnition.nIgnInput,       ParamType::UInt16, 0, 0, VAR_MAP_SIZE - 1}, \
+    {0x1B00, 3, &stConfig.stIgnition.nStartInput,     &stConfigTemp.stIgnition.nStartInput,     ParamType::UInt16, 0, 0, VAR_MAP_SIZE - 1}, \
+    {0x1B00, 4, &stConfig.stIgnition.nEngineRunInput, &stConfigTemp.stIgnition.nEngineRunInput, ParamType::UInt16, 0, 0, VAR_MAP_SIZE - 1}, \
+    {0x1B00, 5, &stConfig.stIgnition.nStopInput,      &stConfigTemp.stIgnition.nStopInput,      ParamType::UInt16, 0, 0, VAR_MAP_SIZE - 1}, \
+    {0x1B00, 6, &stConfig.stIgnition.nMaxCrankTime,   &stConfigTemp.stIgnition.nMaxCrankTime,   ParamType::UInt32, 10000, 500, 30000}, \
+    {0x1B00, 9,  &stConfig.stIgnition.eButtonSource,          &stConfigTemp.stIgnition.eButtonSource,          ParamType::Enum,   static_cast<uint32_t>(IgnitionSource::Variable), 0, 1}, \
+    {0x1B00, 10, &stConfig.stIgnition.nButtonIDE,             &stConfigTemp.stIgnition.nButtonIDE,             ParamType::UInt8,  0, 0, 1}, \
+    {0x1B00, 11, &stConfig.stIgnition.nButtonId,              &stConfigTemp.stIgnition.nButtonId,              ParamType::UInt32, 0x6F0, 0, 536870911}, \
+    {0x1B00, 12, &stConfig.stIgnition.nButtonByte,            &stConfigTemp.stIgnition.nButtonByte,            ParamType::UInt8,  0, 0, 7}, \
+    {0x1B00, 13, &stConfig.stIgnition.nButtonMask,            &stConfigTemp.stIgnition.nButtonMask,            ParamType::UInt8,  0x01, 1, 255}, \
+    {0x1B00, 14, &stConfig.stIgnition.nButtonTimeout,         &stConfigTemp.stIgnition.nButtonTimeout,         ParamType::UInt16, 1000, 0, 60000}
+
+// One role per output, subindex 0x30 + output index
+#define IGNITION_OUTPUT_PARAMS(i) \
+    {0x1B00, 0x30 + (i), &stConfig.stIgnition.eOutputRole[i], &stConfigTemp.stIgnition.eOutputRole[i], ParamType::Enum, static_cast<uint32_t>(IgnitionOutputRole::None), 0, 4}
+#endif
+
+//=============================================================================
+// CAN Message Parameters - Base 0x1C00
+//=============================================================================
+#if NUM_CAN_MESSAGES > 0
+#define CAN_MESSAGE_PARAMS(i) \
+    {0x1C00 + (i), 0,  &stConfig.stCanMessage[i].bEnabled,  &stConfigTemp.stCanMessage[i].bEnabled,  ParamType::Bool,   0, 0, 1}, \
+    {0x1C00 + (i), 1,  &stConfig.stCanMessage[i].nInput,    &stConfigTemp.stCanMessage[i].nInput,    ParamType::UInt16, 0, 0, VAR_MAP_SIZE - 1}, \
+    {0x1C00 + (i), 2,  &stConfig.stCanMessage[i].nIDE,      &stConfigTemp.stCanMessage[i].nIDE,      ParamType::UInt8,  0, 0, 1}, \
+    {0x1C00 + (i), 3,  &stConfig.stCanMessage[i].nID,       &stConfigTemp.stCanMessage[i].nID,       ParamType::UInt32, 0, 0, 536870911}, \
+    {0x1C00 + (i), 4,  &stConfig.stCanMessage[i].nDLC,      &stConfigTemp.stCanMessage[i].nDLC,      ParamType::UInt8,  8, 0, 8}, \
+    {0x1C00 + (i), 5,  &stConfig.stCanMessage[i].nData[0], &stConfigTemp.stCanMessage[i].nData[0], ParamType::UInt8,  0, 0, 255}, \
+    {0x1C00 + (i), 6,  &stConfig.stCanMessage[i].nData[1], &stConfigTemp.stCanMessage[i].nData[1], ParamType::UInt8,  0, 0, 255}, \
+    {0x1C00 + (i), 7,  &stConfig.stCanMessage[i].nData[2], &stConfigTemp.stCanMessage[i].nData[2], ParamType::UInt8,  0, 0, 255}, \
+    {0x1C00 + (i), 8,  &stConfig.stCanMessage[i].nData[3], &stConfigTemp.stCanMessage[i].nData[3], ParamType::UInt8,  0, 0, 255}, \
+    {0x1C00 + (i), 9,  &stConfig.stCanMessage[i].nData[4], &stConfigTemp.stCanMessage[i].nData[4], ParamType::UInt8,  0, 0, 255}, \
+    {0x1C00 + (i), 10, &stConfig.stCanMessage[i].nData[5], &stConfigTemp.stCanMessage[i].nData[5], ParamType::UInt8,  0, 0, 255}, \
+    {0x1C00 + (i), 11, &stConfig.stCanMessage[i].nData[6], &stConfigTemp.stCanMessage[i].nData[6], ParamType::UInt8,  0, 0, 255}, \
+    {0x1C00 + (i), 12, &stConfig.stCanMessage[i].nData[7], &stConfigTemp.stCanMessage[i].nData[7], ParamType::UInt8,  0, 0, 255}, \
+    {0x1C00 + (i), 13, &stConfig.stCanMessage[i].nInterval, &stConfigTemp.stCanMessage[i].nInterval, ParamType::UInt16, 100, 0, 60000}
+#endif
+
+//=============================================================================
 // CAN Output Parameters - Base 0x2000
 //=============================================================================
 #define CAN_OUTPUT_PARAMS(i) \

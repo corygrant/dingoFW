@@ -50,6 +50,22 @@ const ParamInfo stParams[] = {
     WIPER_INTERMIT_PARAMS(),
     #endif
 
+    #if NUM_TIMERS > 0
+    // Timers (0x1A00+)
+    ALL_TIMER_PARAMS,
+    #endif
+
+    #if HAS_IGNITION > 0
+    // Ignition (0x1B00)
+    IGNITION_PARAMS(),
+    ALL_IGNITION_OUTPUT_PARAMS,
+    #endif
+
+    #if NUM_CAN_MESSAGES > 0
+    // CAN Messages (0x1C00+)
+    ALL_CAN_MESSAGE_PARAMS,
+    #endif
+
     // CAN Outputs (0x2000+)
     ALL_CAN_OUTPUT_PARAMS,
 

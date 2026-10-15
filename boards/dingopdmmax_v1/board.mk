@@ -24,6 +24,7 @@ CPPSRC_BOARD += comms/usb.cpp \
 				functions/pwm.cpp \
 				functions/digital_input.cpp \
 				functions/starter.cpp \
+				functions/ignition.cpp \
 				functions/wiper/wiper_digin.cpp \
 				functions/wiper/wiper_intin.cpp \
 				functions/wiper/wiper_mixin.cpp \
