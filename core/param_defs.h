@@ -193,6 +193,20 @@
 #endif
 
 //=============================================================================
+// Ignition Parameters - Base 0x1B00 (single instance)
+//=============================================================================
+#if HAS_IGNITION
+#define IGNITION_PARAMS() \
+    {0x1B00, 0, &stConfig.stIgnition.bEnabled,        &stConfigTemp.stIgnition.bEnabled,        ParamType::Bool,   0, 0, 1}, \
+    {0x1B00, 1, &stConfig.stIgnition.eMode,           &stConfigTemp.stIgnition.eMode,           ParamType::Enum,   static_cast<uint32_t>(IgnitionMode::KeySwitch), 0, 1}, \
+    {0x1B00, 2, &stConfig.stIgnition.nIgnInput,       &stConfigTemp.stIgnition.nIgnInput,       ParamType::UInt16, 0, 0, VAR_MAP_SIZE - 1}, \
+    {0x1B00, 3, &stConfig.stIgnition.nStartInput,     &stConfigTemp.stIgnition.nStartInput,     ParamType::UInt16, 0, 0, VAR_MAP_SIZE - 1}, \
+    {0x1B00, 4, &stConfig.stIgnition.nEngineRunInput, &stConfigTemp.stIgnition.nEngineRunInput, ParamType::UInt16, 0, 0, VAR_MAP_SIZE - 1}, \
+    {0x1B00, 5, &stConfig.stIgnition.nStopInput,      &stConfigTemp.stIgnition.nStopInput,      ParamType::UInt16, 0, 0, VAR_MAP_SIZE - 1}, \
+    {0x1B00, 6, &stConfig.stIgnition.nMaxCrankTime,   &stConfigTemp.stIgnition.nMaxCrankTime,   ParamType::UInt32, 10000, 500, 30000}
+#endif
+
+//=============================================================================
 // CAN Output Parameters - Base 0x2000
 //=============================================================================
 #define CAN_OUTPUT_PARAMS(i) \
