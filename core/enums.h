@@ -170,6 +170,27 @@ enum class TimerMode : uint8_t
 };
 
 //=============================================================================
+// Ignition
+//=============================================================================
+enum class IgnitionMode : uint8_t
+{
+    // Key held in the ON position powers the ignition, a separate input is the
+    // key's momentary START position
+    KeySwitch,
+    // One press of the button toggles the ignition. Pressed while the start
+    // condition input is held, it also cranks
+    StartButton
+};
+
+enum class IgnitionState : uint8_t
+{
+    Off,
+    Ignition,
+    Cranking,
+    Running
+};
+
+//=============================================================================
 // Output (Profet)
 //=============================================================================
 enum class ProfetModel : uint8_t
