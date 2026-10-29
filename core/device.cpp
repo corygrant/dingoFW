@@ -136,8 +136,13 @@ void InitDevice()
 
     InitVarMap(); // Set val pointers
 
-    #if HAS_I2C
+    #if HAS_I2C1
     if (i2cStart(&I2CD1, &i2cConfig) != HAL_RET_SUCCESS)
+        Error::SetFatalError(FatalErrorType::ErrI2C, MsgSrc::Init);
+    #endif
+
+    #if HAS_I2C2
+    if (i2cStart(&I2CD2, &i2cConfig) != HAL_RET_SUCCESS)
         Error::SetFatalError(FatalErrorType::ErrI2C, MsgSrc::Init);
     #endif
 

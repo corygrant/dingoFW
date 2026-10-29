@@ -9,9 +9,11 @@
 
 #define HAS_SE_LEDS TRUE
 #define HAS_USB TRUE
-#define HAS_I2C TRUE
+#define HAS_I2C1 TRUE
+#define HAS_I2C2 TRUE
 #define HAS_EXT_TEMP_SENSOR TRUE
 #define HAS_EXT_MEMORY TRUE
+#define EXT_MEMORY_I2C I2CD2
 #define HAS_BATT_VOLT_SENSE TRUE
 #define CAN_SLEEP TRUE
 
@@ -134,10 +136,16 @@ enum class LedType
 
 const CANConfig &GetCanConfig(CanBitrate bitrate);
 
+/*
+ I2C kernel clock = PCLK1 = 170MHz, 400kHz fast mode, analog filter on
+ PRESC = 1 -> 11.76ns tick, SCLL = 155 (1.84us), SCLH = 45 (0.54us + sync), SCLDEL = 8, SDADEL = 0
+*/
 const I2CConfig i2cConfig = {
-    OPMODE_I2C,
-    400000,
-    FAST_DUTY_CYCLE_2,
+    STM32_TIMINGR_PRESC(1U) |
+    STM32_TIMINGR_SCLDEL(8U) | STM32_TIMINGR_SDADEL(0U) |
+    STM32_TIMINGR_SCLH(45U) | STM32_TIMINGR_SCLL(155U),
+    0,
+    0
 };
 
 msg_t InitAdc();

@@ -1,6 +1,6 @@
 #include "mb85rc.h"
 
-#if (HAS_I2C && HAS_EXT_MEMORY)
+#if HAS_EXT_MEMORY
 bool MB85RC::CheckId()
 {
     //Skip checking IDs
@@ -52,7 +52,7 @@ bool MB85RC::GetId(uint16_t *nManufId, uint16_t *nProdId)
     i2cReleaseBus(m_driver);
 
     if (status != MSG_OK) {
-       lastErrors = i2cGetErrors(&I2CD1);
+       lastErrors = i2cGetErrors(m_driver);
        return false;
     }
 
@@ -79,7 +79,7 @@ bool MB85RC::Read(uint16_t nMemAddr, uint8_t *pData, uint16_t nByteLen)
     i2cReleaseBus(m_driver);
 
     if (status != MSG_OK) {
-       lastErrors = i2cGetErrors(&I2CD1);
+       lastErrors = i2cGetErrors(m_driver);
        return false;
     }
 
@@ -124,7 +124,7 @@ bool MB85RC::Write(uint16_t nMemAddr, uint8_t *nMemVals, uint16_t nByteLen)
     i2cReleaseBus(m_driver);
 
     if (status != MSG_OK) {
-       lastErrors = i2cGetErrors(&I2CD1);
+       lastErrors = i2cGetErrors(m_driver);
        return false;
     }
     return true;

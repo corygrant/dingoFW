@@ -5,7 +5,7 @@
 #include "hardware/mb85rc.h"
 
 #if HAS_EXT_MEMORY
-MB85RC fram(I2CD1, MB85RC_I2CADDR_DEFAULT);
+MB85RC fram(EXT_MEMORY_I2C, MB85RC_I2CADDR_DEFAULT);
 #endif
 
 bool ReadConfigExt()
