@@ -204,9 +204,36 @@ static const ADCConversionGroup adc5_cfg = {
             0,
             0}};
 
+/*
+ OPAMP3-6 as unity gain buffers for AIN1-4
+ VMSEL = 11 (follower), OPAMPINTEN routes the output to the ADC instead of the VOUT pin
+ VOUT pins (PB1, PB12, PA8, PB11) are used for other functions so must stay disconnected
+ Factory trim used (USERTRIM = 0), SYSCFG clock enabled by the HAL
+*/
+#define OPAMP_FOLLOWER (OPAMP_CSR_OPAMPxEN | OPAMP_CSR_VMSEL_0 | OPAMP_CSR_VMSEL_1 | OPAMP_CSR_OPAMPINTEN)
+
+static void InitOpamps()
+{
+    OPAMP3->CSR = OPAMP_FOLLOWER | (1U << OPAMP_CSR_VPSEL_Pos); // VINP1 = PB13 - AIN1 -> ADC3_IN13
+    OPAMP4->CSR = OPAMP_FOLLOWER | (1U << OPAMP_CSR_VPSEL_Pos); // VINP1 = PD11 - AIN4 -> ADC5_IN5
+    OPAMP5->CSR = OPAMP_FOLLOWER | (0U << OPAMP_CSR_VPSEL_Pos); // VINP0 = PB14 - AIN2 -> ADC5_IN3
+    OPAMP6->CSR = OPAMP_FOLLOWER | (1U << OPAMP_CSR_VPSEL_Pos); // VINP1 = PD9  - AIN3 -> ADC4_IN17
+}
+
+static void DeInitOpamps()
+{
+    OPAMP3->CSR = 0;
+    OPAMP4->CSR = 0;
+    OPAMP5->CSR = 0;
+    OPAMP6->CSR = 0;
+}
+
 msg_t InitAdc()
 {
     msg_t ret;
+
+    InitOpamps();
+
     ret = adcStart(&ADCD1, NULL);
     if(ret != HAL_RET_SUCCESS)
         return ret;
@@ -255,6 +282,8 @@ void DeInitAdc()
     adcStop(&ADCD4);
     adcStopConversion(&ADCD5);
     adcStop(&ADCD5);
+
+    DeInitOpamps();
 }
 
 uint16_t GetAdcRaw(AnalogChannel channel)
