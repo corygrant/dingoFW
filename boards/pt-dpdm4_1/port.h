@@ -43,6 +43,12 @@
 #define HAS_NEOPIXELS TRUE
 #define NUM_INT_NEOPIXELS 8
 #define MAX_NEOPIXELS 16
+// TIM1 clock = 72MHz, CCR counts for 0.4µs / 0.8µs high time
+#define NEO_T0H 29
+#define NEO_T1H 58
+// TIM1 Update → DMA2 Stream 5 Channel 6 (STM32F4 DMA request mapping)
+#define NEO_DMA_STREAM_ID STM32_DMA_STREAM_ID(2, 5)
+#define NEO_DMA_CHANNEL 6
 
 //Always false
 //Always true

@@ -9,6 +9,9 @@
 
 #define STM32_VREF_INT_CAL *((uint16_t *)0x1FFF7A2A)
 
+// F4 has a single EXTI pending register
+#define EXTI_PENDING EXTI->PR
+
 void EnterStopMode();
 void RequestBootloader();
 void CheckBootloaderRequest(void);

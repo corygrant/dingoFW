@@ -132,7 +132,7 @@ static const PWMConfig pwm9Cfg = {
 // TIM1 clock = 72MHz (APB2=36MHz, 2x multiplier)
 // Period = 90 counts → 800kHz bit rate (1.25µs per bit)
 //===============================================
-static const PWMConfig pwmNeoIntCfg = {
+static const PWMConfig pwmNeoCfg = {
     .frequency = 72000000,
     .period    = 90,
     .callback  = NULL,

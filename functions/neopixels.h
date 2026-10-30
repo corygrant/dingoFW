@@ -7,8 +7,7 @@
 #include "neopixel.h"
 #include "hal.h"
 
-#define NEO_T0H  29   // 0.4µs @ 72MHz TIM1 clock
-#define NEO_T1H  58   // 0.8µs @ 72MHz TIM1 clock
+// NEO_T0H/NEO_T1H (CCR counts) and the DMA stream/channel/request come from the board port.h
 #define NEO_RST  50   // ≥50 periods of CCR=0 for reset pulse
 
 class NeoPixels {

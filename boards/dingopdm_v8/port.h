@@ -41,6 +41,14 @@
 #define KEYPAD_MAX_DIALS 2
 
 #define HAS_NEOPIXELS TRUE
+#define NUM_INT_NEOPIXELS 5
+#define MAX_NEOPIXELS 16
+// TIM1 clock = 170MHz, CCR counts for 0.4µs / 0.8µs high time
+#define NEO_T0H 68
+#define NEO_T1H 136
+// TIM1 Update → any free DMA channel, routed by DMAMUX
+#define NEO_DMA_STREAM_ID STM32_DMA_STREAM_ID_ANY
+#define NEO_DMA_REQUEST STM32_DMAMUX1_TIM1_UP
 
 //Always false
 //Always true
@@ -151,6 +159,11 @@ const I2CConfig i2cConfig = {
 msg_t InitAdc();
 void DeInitAdc();
 uint16_t GetAdcRaw(AnalogChannel channel);
+float GetAdcVolts(AnalogChannel channel);
 float GetBattVolt();
 float GetTemperature();
 float GetVDDA();
+
+#if HAS_NEOPIXELS
+void UpdateNeopixels();
+#endif

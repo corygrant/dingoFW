@@ -1,5 +1,6 @@
 #include "port.h"
 #include "mcu_utils.h"
+#include "hw_devices.h"
 
 /*
  FDCAN kernel clock = PCLK1 = 170MHz, 17 tq per bit (Seg1 = 13, Seg2 = 3), 82.4% sample point
@@ -341,6 +342,23 @@ uint16_t GetAdcRaw(AnalogChannel channel)
     }
 }
 
+float AdcToVolts(adcsample_t raw)
+{
+    // MCU vRef = measured VDDA
+    // 4095 counts full scale
+    float mcuVolts = (GetVDDA() / 4095) * raw;
+
+    const float rUpper = 4700;
+    const float rLower = 10000;
+
+    return mcuVolts * ((rUpper + rLower) / rLower);
+}
+
+float GetAdcVolts(AnalogChannel channel)
+{
+    return AdcToVolts(GetAdcRaw(channel));
+}
+
 float GetBattVolt()
 {
     // MCU vRef = 3.3v
@@ -366,3 +384,10 @@ float GetVDDA()
 
     return ((float)STM32_VREF_INT_CAL / (float)raw) * STM32_CAL_VDDA;
 }
+#if HAS_NEOPIXELS
+void UpdateNeopixels()
+{
+    // Pixel assignments not defined yet, just push whatever is set
+    intNeoPixels.Update();
+}
+#endif

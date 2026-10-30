@@ -4,7 +4,7 @@
 #if NUM_OUTPUTS > 0
 void Pwm::Update()
 {
-    bChannelEnabled = (bool)(m_pwm->enabled & (1 << 0));
+    bChannelEnabled = (bool)(m_pwm->enabled & (1 << static_cast<uint8_t>(m_pwmCh)));
 
     if (!pConfig->bEnabled || !bChannelEnabled) {
         bLastChannelEnabled = bChannelEnabled;
@@ -80,6 +80,10 @@ void Pwm::UpdateSoftStart() {
 
 void Pwm::UpdateFrequency()
 {
+    // Outputs can share a timer, so only the Ch1 output sets its frequency
+    if (m_pwmCh != PwmChannel::Ch1 || m_pwm->state != PWM_READY)
+        return;
+
     // Frequency within range and
     // (Frequency setting has changed or
     // PWM driver frequency != Frequency setting)
@@ -106,7 +110,8 @@ void Pwm::EnsureStarted()
 
 void Pwm::OverrideFrequency(uint16_t nFreq)
 {
-    if (nFreq > 0 && nFreq <= 400 &&
+    if (m_pwmCh == PwmChannel::Ch1 && m_pwm->state == PWM_READY &&
+        nFreq > 0 && nFreq <= 400 &&
         m_pwm->period != (m_pwmCfg->frequency / nFreq))
     {
         pwmChangePeriod(m_pwm, m_pwmCfg->frequency / nFreq);
@@ -126,7 +131,9 @@ void Pwm::On()
 
 void Pwm::Off()
 {
-    pwmDisablePeriodicNotification(m_pwm);
     pwmDisableChannel(m_pwm, static_cast<uint8_t>(m_pwmCh));
+    // Period callback is shared by every channel on the timer
+    if (m_pwm->enabled == 0)
+        pwmDisablePeriodicNotification(m_pwm);
 }
 #endif

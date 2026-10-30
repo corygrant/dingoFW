@@ -8,3 +8,6 @@
 #define STM32_CAL_VDDA 3.3
 
 #define STM32_VREF_INT_CAL *((uint16_t *)0x1FFFF7BA)
+
+// F3 pending register for lines 0-31 (PR2 holds the rest)
+#define EXTI_PENDING EXTI->PR

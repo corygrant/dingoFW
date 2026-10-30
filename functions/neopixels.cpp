@@ -1,9 +1,12 @@
 #include "neopixels.h"
 
-// TIM1 Update event → DMA2 Stream 5 Channel 6 (per STM32F4 DMA request mapping)
-#define NEO_DMA_STREAM_ID  STM32_DMA_STREAM_ID(2, 5)
-#define NEO_DMA_CHANNEL    6
-#define NEO_DMA_MODE      (STM32_DMA_CR_CHSEL(NEO_DMA_CHANNEL) | \
+// Timer update event → DMA, stream and channel/request set in the board port.h
+#if STM32_DMA_SUPPORTS_DMAMUX
+#define NEO_DMA_CHSEL      0   // DMAMUX routes the request instead
+#else
+#define NEO_DMA_CHSEL      STM32_DMA_CR_CHSEL(NEO_DMA_CHANNEL)
+#endif
+#define NEO_DMA_MODE      (NEO_DMA_CHSEL                        | \
                            STM32_DMA_CR_PL(2)                   | \
                            STM32_DMA_CR_DIR_M2P                 | \
                            STM32_DMA_CR_PSIZE_HWORD             | \
@@ -21,7 +24,10 @@ NeoPixels::NeoPixels(uint8_t numPixels, PWMDriver *pwmDriver,
 
 void NeoPixels::init() {
     m_dmaStream = dmaStreamAlloc(NEO_DMA_STREAM_ID, 6, dmaCallback, this);
-    osalDbgAssert(m_dmaStream != nullptr, "DMA2 Stream5 already in use");
+    osalDbgAssert(m_dmaStream != nullptr, "NeoPixel DMA stream already in use");
+#if STM32_DMA_SUPPORTS_DMAMUX
+    dmaSetRequestSource(m_dmaStream, NEO_DMA_REQUEST);
+#endif
     pwmStart(m_pwmDriver, m_pwmCfg);
     pwmEnableChannel(m_pwmDriver, (pwmchannel_t)m_pwmCh, 0);
     m_initialized = true;

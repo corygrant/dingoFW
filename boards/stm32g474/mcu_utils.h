@@ -9,6 +9,9 @@
 
 #define STM32_VREF_INT_CAL *((uint16_t *)0x1FFF75AA)
 
+// G4 splits the EXTI pending register into PR1 (lines 0-31) and PR2
+#define EXTI_PENDING EXTI->PR1
+
 void EnterStopMode();
 void RequestBootloader();
 void CheckBootloaderRequest(void);

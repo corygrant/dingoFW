@@ -67,16 +67,22 @@ public:
         switch (model)
         {
         case ProfetModel::BTS7002_1EPP:
+        #ifdef BTS7002_1EPP_KILIS
             fKILIS = BTS7002_1EPP_KILIS;
+        #endif
             nPwmReadDelay = PWM_READ_DELAY_SINGLE_CH;
             break;
         case ProfetModel::BTS7008_2EPA_CH1:
         case ProfetModel::BTS7008_2EPA_CH2:
+        #ifdef BTS7008_2EPA_KILIS
             fKILIS = BTS7008_2EPA_KILIS;
+        #endif
             nPwmReadDelay = PWM_READ_DELAY_DOUBLE_CH;
             break;
         case ProfetModel::BTS70012_1ESP:
+        #ifdef BTS70012_1ESP_KILIS
             fKILIS = BTS70012_1ESP_KILIS;
+        #endif
             nPwmReadDelay = PWM_READ_DELAY_SINGLE_CH;
             break;
         }
