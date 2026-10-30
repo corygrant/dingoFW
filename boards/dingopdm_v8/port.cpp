@@ -1,6 +1,8 @@
 #include "port.h"
 #include "mcu_utils.h"
 #include "hw_devices.h"
+#include "device.h"
+#include "can.h" 
 
 /*
  FDCAN kernel clock = PCLK1 = 170MHz, 17 tq per bit (Seg1 = 13, Seg2 = 3), 82.4% sample point
@@ -387,7 +389,37 @@ float GetVDDA()
 #if HAS_NEOPIXELS
 void UpdateNeopixels()
 {
-    // Pixel assignments not defined yet, just push whatever is set
+    constexpr uint8_t brightness = 16; // 0-255
+
+    for (uint8_t i = 0; i < 5; i++)
+        intNeoPixels.pixels[i].SetBrightness(brightness);
+
+    //Temperature
+    if(bDeviceCriticalTemp)
+        intNeoPixels.pixels[0].SetColor(NeoPixel_Red);
+    else if(bDeviceOverTemp)
+        intNeoPixels.pixels[0].SetColor(NeoPixel_Yellow);
+    else
+        intNeoPixels.pixels[0].SetColor(NeoPixel_Green);
+
+    //CAN1 Status
+    //if((SYS_TIME - GetLastCanRxTime()) > 500) // 500ms timeout
+    //    intNeoPixels.pixels[1].SetColor(NeoPixel_Off);
+    //else
+        intNeoPixels.pixels[1].SetColor(NeoPixel_Purple);
+
+    //CAN2 Status
+    //if((SYS_TIME - GetLastCanRxTime()) > 500) // 500ms timeout
+    //    intNeoPixels.pixels[2].SetColor(NeoPixel_Off);
+    //else
+        intNeoPixels.pixels[2].SetColor(NeoPixel_Purple);
+
+    //USB Status
+    intNeoPixels.pixels[3].SetColor(NeoPixel_White);
+
+    //LIN Status
+    intNeoPixels.pixels[4].SetColor(NeoPixel_Pink);
+
     intNeoPixels.Update();
 }
 #endif
