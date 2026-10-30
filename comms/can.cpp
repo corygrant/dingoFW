@@ -112,6 +112,10 @@ void CanRxThread(void *arg)
         {
             nLastCanRxTime = SYS_TIME;
 
+            // Classic CAN DLC 9-15 is legal on the wire but still means 8 data bytes
+            if (msg.DLC > 8)
+                msg.DLC = 8;
+
             // Config frames go straight to the param thread
             if ((nBus != 0) || !RouteParamFrame(&msg))
                 res = PostRxFrame(&msg, nBus);

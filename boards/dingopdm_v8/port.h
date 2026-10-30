@@ -76,7 +76,7 @@
     (NUM_KEYPADS * (KEYPAD_MAX_BUTTONS + KEYPAD_MAX_DIALS + KEYPAD_MAX_ANALOG_INPUTS)) \
 )
 
-#define MAILBOX_SIZE 128 // FDCAN frames are 72 bytes (64 byte data), 256 doesn't fit in RAM
+#define MAILBOX_SIZE 256
 #define DEVICE_THREAD_STACK 2048
 #define CAN_THREAD_STACK 512
 

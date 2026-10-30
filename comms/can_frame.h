@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cstddef>
 #include <cstdint>
 #include <cstring>
 #include "hal.h"
@@ -61,3 +62,14 @@ template <typename F> inline uint64_t CanData64(const F &f)
 }
 
 template <typename F> inline void CanSetData64(F &f, uint64_t n) { memcpy(f.data8, &n, sizeof(n)); }
+
+// Buffered frame storage, classic CAN only: the frame's own header plus 8 data bytes, byte for byte.
+// FDCAN frames reserve 64 data bytes (72 total), a slot is 16. bxCAN data is already the last 8 bytes, no change.
+// Bytes past data8[7] are left as-is on load, the driver only reads DLC bytes.
+template <typename F> struct CanSlot
+{
+    uint8_t raw[offsetof(F, data8) + 8];
+};
+
+template <typename F> inline void CanStore(CanSlot<F> &s, const F &f) { memcpy(s.raw, &f, sizeof(s.raw)); }
+template <typename F> inline void CanLoad(F &f, const CanSlot<F> &s) { memcpy(&f, s.raw, sizeof(s.raw)); }

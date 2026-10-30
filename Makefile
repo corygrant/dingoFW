@@ -36,8 +36,9 @@ ifeq ($(USE_LINK_GC),)
 endif
 
 # Linker extra options here.
+# No --print-memory-usage, it counts the heap filling spare RAM as used (always 100%), see POST_MAKE_ALL_RULE_HOOK
 ifeq ($(USE_LDOPT),)
-	USE_LDOPT = --print-memory-usage
+	USE_LDOPT =
 endif
 
 # Enable this if you want link time optimizations (LTO).
@@ -226,6 +227,16 @@ include $(RULESPATH)/rules.mk
 ##############################################################################
 # Custom rules
 #
+
+# Flash = text + data, RAM = stacks + data + bss (everything below the heap)
+# ChibiOS gives the heap whatever RAM is left (CH_CFG_MEMCORE_SIZE 0)
+POST_MAKE_ALL_RULE_HOOK: $(BUILDDIR)/$(PROJECT).elf
+	@{ $(TRGT)nm -t d $<; $(SZ) -B $< | awk 'NR == 2 { print $$1 + $$2, "X", "flash_used" }'; } | \
+	awk '{ v[$$3] = $$1 } END { \
+		ft = v["__flash0_end__"] - v["__flash0_base__"]; fu = v["flash_used"]; \
+		rt = v["__heap_end__"] - v["__main_stack_base__"]; ru = v["__heap_base__"] - v["__main_stack_base__"]; \
+		printf "Flash: %7d B / %4d KB  %5.1f%%\n", fu, ft / 1024, 100 * fu / ft; \
+		printf "RAM:   %7d B / %4d KB  %5.1f%%  (%d B free for heap)\n", ru, rt / 1024, 100 * ru / rt, rt - ru }'
 
 #
 # Custom rules

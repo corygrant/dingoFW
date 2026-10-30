@@ -1,16 +1,18 @@
 #include "mailbox.h"
 #include "ch.hpp"
 #include "port.h"
+#include "can_frame.h"
 
-static chibios_rt::Mailbox<CANRxFrame*, MAILBOX_SIZE> rxMb;
-static chibios_rt::Mailbox<CANTxFrame*, MAILBOX_SIZE> txMb[NUM_CAN_BUSES]; // One per bus, a stalled bus can't hold up the other
-static chibios_rt::Mailbox<CANTxFrame*, MAILBOX_SIZE> txUsbMb;
+static chibios_rt::Mailbox<CanSlot<CANRxFrame>*, MAILBOX_SIZE> rxMb;
+static chibios_rt::Mailbox<CanSlot<CANTxFrame>*, MAILBOX_SIZE> txMb[NUM_CAN_BUSES]; // One per bus, a stalled bus can't hold up the other
+static chibios_rt::Mailbox<CanSlot<CANTxFrame>*, MAILBOX_SIZE> txUsbMb;
 
 //Mailbox buffer of CAN frames
 //Not managed by mailbox
-CANRxFrame rxFrames[MAILBOX_SIZE];
-CANTxFrame txFrames[NUM_CAN_BUSES][MAILBOX_SIZE];
-CANTxFrame txUsbFrames[MAILBOX_SIZE];
+//Slots hold header + 8 data bytes, see CanSlot
+CanSlot<CANRxFrame> rxFrames[MAILBOX_SIZE];
+CanSlot<CANTxFrame> txFrames[NUM_CAN_BUSES][MAILBOX_SIZE];
+CanSlot<CANTxFrame> txUsbFrames[MAILBOX_SIZE];
 uint8_t rxBus[MAILBOX_SIZE]; // Bus each rx frame arrived on
 
 //Used to manage the memory used by the mailbox
@@ -33,7 +35,7 @@ msg_t PostTxFrame(CANTxFrame *frame, uint8_t nBus)
     txMutex.lock();
     for (int i = 0; i < MAILBOX_SIZE; i++) {
         if (!txMsgUsed[nBus][i]) {
-            txFrames[nBus][i] = *frame;
+            CanStore(txFrames[nBus][i], *frame);
             txMsgUsed[nBus][i] = true;
 
             msg_t result = txMb[nBus].post(&txFrames[nBus][i], TIME_IMMEDIATE);
@@ -55,10 +57,10 @@ msg_t PostTxFrame(CANTxFrame *frame, uint8_t nBus)
 
 msg_t FetchTxFrame(CANTxFrame *frame, uint8_t nBus, sysinterval_t timeout)
 {
-    CANTxFrame *txFrame;
+    CanSlot<CANTxFrame> *txFrame;
     msg_t result = txMb[nBus].fetch(&txFrame, timeout);
     if (result == MSG_OK) {
-        *frame = *txFrame; // Copy before freeing the slot so a producer can't overwrite it
+        CanLoad(*frame, *txFrame); // Copy before freeing the slot so a producer can't overwrite it
         txMutex.lock();
         txMsgUsed[nBus][txFrame - txFrames[nBus]] = false;
         txMutex.unlock();
@@ -71,7 +73,7 @@ msg_t PostTxUsbFrame(CANTxFrame *frame)
     txUsbMutex.lock();
     for (int i = 0; i < MAILBOX_SIZE; i++) {
         if (!txUsbMsgUsed[i]) {
-            txUsbFrames[i] = *frame;
+            CanStore(txUsbFrames[i], *frame);
             txUsbMsgUsed[i] = true;
 
             msg_t result = txUsbMb.post(&txUsbFrames[i], TIME_IMMEDIATE);
@@ -88,10 +90,10 @@ msg_t PostTxUsbFrame(CANTxFrame *frame)
 
 msg_t FetchTxUsbFrame(CANTxFrame *frame, sysinterval_t timeout)
 {
-    CANTxFrame *txFrame;
+    CanSlot<CANTxFrame> *txFrame;
     msg_t result = txUsbMb.fetch(&txFrame, timeout);
     if (result == MSG_OK) {
-        *frame = *txFrame; // Copy before freeing the slot so a producer can't overwrite it
+        CanLoad(*frame, *txFrame); // Copy before freeing the slot so a producer can't overwrite it
         txUsbMutex.lock();
         txUsbMsgUsed[txFrame - txUsbFrames] = false;
         txUsbMutex.unlock();
@@ -104,7 +106,7 @@ msg_t PostRxFrame(CANRxFrame *frame, uint8_t nBus)
     rxMutex.lock();
     for (int i = 0; i < MAILBOX_SIZE; i++) {
         if (!rxMsgUsed[i]) {
-            rxFrames[i] = *frame;
+            CanStore(rxFrames[i], *frame);
             rxBus[i] = nBus;
             rxMsgUsed[i] = true;
 
@@ -122,10 +124,10 @@ msg_t PostRxFrame(CANRxFrame *frame, uint8_t nBus)
 
 msg_t FetchRxFrame(CANRxFrame *frame, uint8_t *pBus)
 {
-    CANRxFrame *rxFrame;
+    CanSlot<CANRxFrame> *rxFrame;
     msg_t result = rxMb.fetch(&rxFrame, TIME_IMMEDIATE);
     if (result == MSG_OK) {
-        *frame = *rxFrame; // Copy before freeing the slot so a producer can't overwrite it
+        CanLoad(*frame, *rxFrame); // Copy before freeing the slot so a producer can't overwrite it
         *pBus = rxBus[rxFrame - rxFrames];
         rxMutex.lock();
         rxMsgUsed[rxFrame - rxFrames] = false;

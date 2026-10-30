@@ -322,7 +322,7 @@ static void ProcessParamMsg(CANRxFrame *rx) {
     }
 }
 
-static CANRxFrame paramFrames[MAILBOX_SIZE];
+static CanSlot<CANRxFrame> paramFrames[MAILBOX_SIZE]; // Header + 8 data bytes, see CanSlot
 static msg_t paramMsgs[MAILBOX_SIZE];
 static objects_fifo_t paramFifo;
 
@@ -332,11 +332,11 @@ bool RouteParamFrame(CANRxFrame *frame)
         (CanId(*frame) != (uint32_t)(stConfig.stDevice.nBaseId + CONFIG_RX_OFFSET)))
         return false;
 
-    CANRxFrame *pFrame = static_cast<CANRxFrame*>(chFifoTakeObjectTimeout(&paramFifo, TIME_IMMEDIATE));
+    auto *pFrame = static_cast<CanSlot<CANRxFrame>*>(chFifoTakeObjectTimeout(&paramFifo, TIME_IMMEDIATE));
     if (pFrame == nullptr)
         return true; // Queue full, drop - host retries on CRC/count mismatch
 
-    *pFrame = *frame;
+    CanStore(*pFrame, *frame);
     chFifoSendObject(&paramFifo, pFrame);
     return true;
 }
@@ -348,11 +348,12 @@ static void ParamThread(void *)
 
     while (true)
     {
-        CANRxFrame *pFrame;
+        CanSlot<CANRxFrame> *pFrame;
         if (chFifoReceiveObjectTimeout(&paramFifo, reinterpret_cast<void**>(&pFrame), TIME_INFINITE) != MSG_OK)
             continue;
 
-        CANRxFrame frame = *pFrame;
+        CANRxFrame frame;
+        CanLoad(frame, *pFrame);
         chFifoReturnObject(&paramFifo, pFrame);
 
         CheckRequestMsgs(&frame);
@@ -362,7 +363,7 @@ static void ParamThread(void *)
 
 void InitParamThread()
 {
-    chFifoObjectInit(&paramFifo, sizeof(CANRxFrame), MAILBOX_SIZE, paramFrames, paramMsgs);
+    chFifoObjectInit(&paramFifo, sizeof(CanSlot<CANRxFrame>), MAILBOX_SIZE, paramFrames, paramMsgs);
 
     // Priority below DeviceThread
     chThdCreateStatic(waParamThread, sizeof(waParamThread), NORMALPRIO - 1, ParamThread, nullptr);
