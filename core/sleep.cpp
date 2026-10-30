@@ -145,7 +145,7 @@ void EnterSleep()
     // Arming a line can latch an edge from the pin changing mode. Clear those so
     // only a real wake source ends the stop. One arriving from here on is still
     // pending at the WFI and wakes the MCU as it should.
-    EXTI->PR = 0x0000FFFF;
+    EXTI_PENDING = 0x0000FFFF;
     NVIC_ClearPendingIRQ(EXTI0_IRQn);
     NVIC_ClearPendingIRQ(EXTI1_IRQn);
     NVIC_ClearPendingIRQ(EXTI2_IRQn);
