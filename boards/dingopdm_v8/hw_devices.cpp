@@ -36,6 +36,6 @@ Digital_Input digIn[NUM_DIG_INPUTS] = {
 Led statusLed = Led(LINE_LED_STATUS);
 Led errorLed = Led(LINE_LED_ERROR);
 
-MCP9808 tempSensor(I2CD2, MCP9808_I2CADDR_DEFAULT);
+//MCP9808 tempSensor(I2CD2, MCP9808_I2CADDR_DEFAULT);
 
 NeoPixels intNeoPixels(NUM_INT_NEOPIXELS, &PWMD1, &pwmNeoCfg, PwmChannel::Ch1);

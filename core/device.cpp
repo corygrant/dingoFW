@@ -111,13 +111,17 @@ struct SlowThread : chibios_rt::BaseStaticThread<256>
             //=================================================================
             // Perform tasks that don't need to be done every cycle here
             //=================================================================
+            #if HAS_BATT_VOLT_SENSE
             fBattVolt = GetBattVolt();
+            #endif
 
             // Temp sensor is I2C, takes a while to read
             // Don't want to slow down main thread
+            #if HAS_EXT_TEMP_SENSOR
             fTempSensor = tempSensor.GetTemp();
             bDeviceOverTemp = tempSensor.OverTempLimit();
             bDeviceCriticalTemp = tempSensor.CritTempLimit();
+            #endif
 
             // palToggleLine(LINE_E2);
             chThdSleepMilliseconds(250);

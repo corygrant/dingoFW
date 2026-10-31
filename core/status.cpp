@@ -41,12 +41,15 @@ DeviceState GetDeviceState()
     return eState;
 }
 
-#if HAS_EXT_TEMP_SENSOR
+
 float GetBoardTemp()
 {
+    #if HAS_EXT_TEMP_SENSOR
     return VolatileRead(fTempSensor);
+    #else
+    return 0;
+    #endif
 }
-#endif
 
 #if NUM_OUTPUTS > 0
 float GetTotalCurrent()

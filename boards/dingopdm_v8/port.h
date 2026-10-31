@@ -11,8 +11,8 @@
 #define HAS_USB TRUE
 #define HAS_I2C1 TRUE
 #define HAS_I2C2 TRUE
-#define HAS_EXT_TEMP_SENSOR TRUE
-#define HAS_EXT_MEMORY TRUE
+#define HAS_EXT_TEMP_SENSOR FALSE
+#define HAS_EXT_MEMORY FALSE
 #define EXT_MEMORY_I2C I2CD2
 #define HAS_BATT_VOLT_SENSE TRUE
 #define CAN_SLEEP TRUE
@@ -55,7 +55,7 @@
 //State
 //Temperature sensor
 //Battery voltage
-#define VAR_MAP_SYS_VARS 5
+#define VAR_MAP_SYS_VARS 4
 
 #define VAR_MAP_WIPER_VARS 6
 
@@ -75,6 +75,13 @@
     VAR_MAP_WIPER_VARS + \
     (NUM_KEYPADS * (KEYPAD_MAX_BUTTONS + KEYPAD_MAX_DIALS + KEYPAD_MAX_ANALOG_INPUTS)) \
 )
+
+// Last 4 x 2KB pages of flash (pages 252-255, 0x0807E000), reserved in dingopdm_v8.ld
+// Assumes factory default dual bank mode (DBANK = 1, 2KB pages), which the ChibiOS G4 EFL driver requires
+#define CONFIG_SECTOR       252U
+#define CONFIG_NUM_SECTORS  4U
+#define CONFIG_FLASH_OFFSET (CONFIG_SECTOR * 2048U)
+#define CONFIG_FLASH        getBaseFlash(&EFLD1)
 
 #define MAILBOX_SIZE 128
 #define DEVICE_THREAD_STACK 2048

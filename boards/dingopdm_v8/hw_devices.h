@@ -13,5 +13,5 @@ extern Analog_Input analogIn[NUM_ANALOG_INPUTS];
 extern Digital_Input digIn[NUM_DIG_INPUTS];
 extern Led statusLed;
 extern Led errorLed;
-extern MCP9808 tempSensor;
+//extern MCP9808 tempSensor;
 extern NeoPixels intNeoPixels;
