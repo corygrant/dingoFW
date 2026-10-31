@@ -231,6 +231,16 @@ static void DeInitOpamps()
     OPAMP6->CSR = 0;
 }
 
+/*
+ Circular depth 1 DMA fires TC every sequence (~1 IRQ/us across all 5 ADCs), enough to starve the CPU
+ Samples are only polled, so drop TCIE once running (TCIE is writable while the channel is enabled)
+*/
+static void StartAdcConversion(ADCDriver *adcp, const ADCConversionGroup *grpp, volatile adcsample_t *samples, size_t depth)
+{
+    adcStartConversion(adcp, grpp, const_cast<adcsample_t*>(samples), depth);
+    adcp->dmastp->channel->CCR &= ~STM32_DMA_CR_TCIE;
+}
+
 msg_t InitAdc()
 {
     msg_t ret;
@@ -244,31 +254,31 @@ msg_t InitAdc()
     adcSTM32EnableTS(&ADCD1); // Enable temperature sensor
     adcSTM32EnableVREF(&ADCD1); // Enable vref
 
-    adcStartConversion(&ADCD1, &adc1_cfg, const_cast<adcsample_t*>(adc1_samples), ADC1_BUF_DEPTH);
+    StartAdcConversion(&ADCD1, &adc1_cfg, adc1_samples, ADC1_BUF_DEPTH);
 
     ret = adcStart(&ADCD2, NULL);
     if(ret != HAL_RET_SUCCESS)
         return ret;
 
-    adcStartConversion(&ADCD2, &adc2_cfg, const_cast<adcsample_t*>(adc2_samples), ADC2_BUF_DEPTH);
+    StartAdcConversion(&ADCD2, &adc2_cfg, adc2_samples, ADC2_BUF_DEPTH);
 
     ret = adcStart(&ADCD3, NULL);
     if(ret != HAL_RET_SUCCESS)
         return ret;
 
-    adcStartConversion(&ADCD3, &adc3_cfg, const_cast<adcsample_t*>(adc3_samples), ADC3_BUF_DEPTH);
+    StartAdcConversion(&ADCD3, &adc3_cfg, adc3_samples, ADC3_BUF_DEPTH);
 
     ret = adcStart(&ADCD4, NULL);
     if(ret != HAL_RET_SUCCESS)
         return ret;
 
-    adcStartConversion(&ADCD4, &adc4_cfg, const_cast<adcsample_t*>(adc4_samples), ADC4_BUF_DEPTH);
+    StartAdcConversion(&ADCD4, &adc4_cfg, adc4_samples, ADC4_BUF_DEPTH);
 
     ret = adcStart(&ADCD5, NULL);
     if(ret != HAL_RET_SUCCESS)
         return ret;
 
-    adcStartConversion(&ADCD5, &adc5_cfg, const_cast<adcsample_t*>(adc5_samples), ADC5_BUF_DEPTH);
+    StartAdcConversion(&ADCD5, &adc5_cfg, adc5_samples, ADC5_BUF_DEPTH);
 
     return HAL_RET_SUCCESS;
 }
@@ -412,13 +422,13 @@ void UpdateNeopixels()
     //if((SYS_TIME - GetLastCanRxTime()) > 500) // 500ms timeout
     //    intNeoPixels.pixels[2].SetColor(NeoPixel_Off);
     //else
-        intNeoPixels.pixels[2].SetColor(NeoPixel_Purple);
+        intNeoPixels.pixels[2].SetColor(NeoPixel_Blue);
 
     //USB Status
-    intNeoPixels.pixels[3].SetColor(NeoPixel_White);
+    intNeoPixels.pixels[3].SetColor(NeoPixel_Red);
 
     //LIN Status
-    intNeoPixels.pixels[4].SetColor(NeoPixel_Pink);
+    intNeoPixels.pixels[4].SetColor(NeoPixel_Orange);
 
     intNeoPixels.Update();
 }
