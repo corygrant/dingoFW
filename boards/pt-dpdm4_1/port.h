@@ -40,6 +40,12 @@
 #define KEYPAD_MAX_ANALOG_INPUTS 4
 #define KEYPAD_MAX_DIALS 2
 
+// Lua keeps its script in FRAM (core/lua_script.h)
+#define HAS_LUA TRUE
+#define NUM_LUA_OUTPUTS 32
+#define LUA_HEAP_SIZE (40 * 1024)
+#define EXT_MEMORY_SIZE 0x4000 // MB85RC128A, the smallest FRAM fitted (no device ID, see MB85RC::CheckId)
+
 #define HAS_NEOPIXELS TRUE
 #define NUM_INT_NEOPIXELS 8
 #define MAX_NEOPIXELS 16
@@ -71,6 +77,7 @@
     (NUM_COUNTERS * 1) + \
     (NUM_TIMERS * 2) + \
     (NUM_MATH * 1) + \
+    (NUM_LUA_OUTPUTS * 1) + \
     VAR_MAP_WIPER_VARS + \
     (NUM_KEYPADS * (KEYPAD_MAX_BUTTONS + KEYPAD_MAX_DIALS + KEYPAD_MAX_ANALOG_INPUTS)) \
 )   

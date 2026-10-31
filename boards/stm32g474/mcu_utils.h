@@ -12,6 +12,9 @@
 // G4 splits the EXTI pending register into PR1 (lines 0-31) and PR2
 #define EXTI_PENDING EXTI->PR1
 
+// OpenBLT handoff block, bootloader/common/dingo_blt.h. Top of RAM, survives the reset
+#define BL_HANDOFF_ADDR 0x2001FFF0
+
 void EnterStopMode();
 void RequestBootloader();
 void CheckBootloaderRequest(void);

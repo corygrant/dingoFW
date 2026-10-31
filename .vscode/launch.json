@@ -4,6 +4,8 @@
         {
             "cwd": "${workspaceFolder}",
             "executable": "${workspaceFolder}/build/dingopdm_v7.elf",
+            // Bootloader too, the app only starts behind it (pixi run build-bl)
+            "loadFiles": ["${workspaceFolder}/bootloader/stm32f446/build/openblt_stm32f446.elf", "${workspaceFolder}/build/dingopdm_v7.elf"],
             "name": "Debug dingoPDM v7",
             "request": "launch",
             "type": "cortex-debug",
@@ -20,6 +22,8 @@
         {
             "cwd": "${workspaceFolder}",
             "executable": "${workspaceFolder}/build/dingopdm_v8.elf",
+            // Bootloader too, the app only starts behind it (pixi run build-bl)
+            "loadFiles": ["${workspaceFolder}/bootloader/stm32g474/build/openblt_stm32g474.elf", "${workspaceFolder}/build/dingopdm_v8.elf"],
             "name": "Debug dingoPDM v8",
             "request": "launch",
             "type": "cortex-debug",
@@ -36,6 +40,8 @@
         {
             "cwd": "${workspaceFolder}",
             "executable": "${workspaceFolder}/build/dingopdmmax_v1.elf",
+            // Bootloader too, the app only starts behind it (pixi run build-bl)
+            "loadFiles": ["${workspaceFolder}/bootloader/stm32f446/build/openblt_stm32f446.elf", "${workspaceFolder}/build/dingopdmmax_v1.elf"],
             "name": "Debug dingoPDM-Max v1",
             "request": "launch",
             "type": "cortex-debug",
@@ -52,6 +58,8 @@
         {
             "cwd": "${workspaceFolder}",
             "executable": "${workspaceFolder}/build/canboard_v2.elf",
+            // Bootloader too, the app only starts behind it (pixi run build-bl)
+            "loadFiles": ["${workspaceFolder}/bootloader/stm32f303/build/openblt_stm32f303.elf", "${workspaceFolder}/build/canboard_v2.elf"],
             "name": "Debug CANBoard v2",
             "request": "launch",
             "type": "cortex-debug",
@@ -68,6 +76,8 @@
         {
             "cwd": "${workspaceFolder}",
             "executable": "${workspaceFolder}/build/pt-dpdm4_1.elf",
+            // Bootloader too, the app only starts behind it (pixi run build-bl)
+            "loadFiles": ["${workspaceFolder}/bootloader/stm32f446/build/openblt_stm32f446.elf", "${workspaceFolder}/build/pt-dpdm4_1.elf"],
             "name": "Debug PT-DPDM4_1",
             "request": "launch",
             "type": "cortex-debug",

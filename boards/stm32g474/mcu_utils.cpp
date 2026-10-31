@@ -36,11 +36,11 @@ void EnterStopMode()
  void RequestBootloader()
 {
     // Set the magic code
-    *((volatile unsigned long *)0x2001FFF0) = 0xDEADBEEF; // End of RAM
+    *((volatile unsigned long *)BL_HANDOFF_ADDR) = 0xDEADBEEF;
 
     // Reset the microcontroller to start the bootloader on next boot
-    // See enter_bootloader.S, which overrides the reset handler
-    // to jump to the bootloader if the magic code is set
+    // The OpenBLT bootloader (bootloader/common/hooks.c) jumps to the
+    // ST ROM USB DFU bootloader if the magic code is set
     NVIC_SystemReset();
     
     // No further code will execute after this point

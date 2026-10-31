@@ -11,3 +11,6 @@
 
 // F3 pending register for lines 0-31 (PR2 holds the rest)
 #define EXTI_PENDING EXTI->PR
+
+// OpenBLT handoff block, bootloader/common/dingo_blt.h. Top of CCM, survives the reset
+#define BL_HANDOFF_ADDR 0x10000FF0

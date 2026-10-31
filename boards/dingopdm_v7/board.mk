@@ -15,9 +15,6 @@ include $(CHIBIOS)/os/common/startup/ARMCMx/compilers/GCC/mk/startup_stm32f4xx.m
 include $(CHIBIOS)/os/hal/ports/STM32/STM32F4xx/platform.mk
 include $(CHIBIOS)/os/common/ports/ARMv7-M/compilers/GCC/mk/port.mk
 
-BOOTLOADERASM = $(MCUDIR)/enter_bootloader.S
-ALLXASMSRC += $(BOOTLOADERASM)
-
 CPPSRC_BOARD += comms/usb.cpp \
 				core/sleep.cpp \
 				functions/profet.cpp \
@@ -43,3 +40,5 @@ UINC_BOARD += 	./functions/wiper \
 				./functions/keypad/blink \
 				./functions/keypad/grayhill \
 				./functions/keypad
+
+include core/lua.mk

@@ -44,6 +44,9 @@
 #define KEYPAD_MAX_ANALOG_INPUTS 0
 #define KEYPAD_MAX_DIALS 0
 
+#define HAS_LUA FALSE // Needs FRAM for the script
+#define NUM_LUA_OUTPUTS 0
+
 #define HAS_NEOPIXELS FALSE
 
 //Always false
@@ -67,13 +70,14 @@
     (NUM_COUNTERS * 1) + \
     (NUM_TIMERS * 2) + \
     (NUM_MATH * 1) + \
+    (NUM_LUA_OUTPUTS * 1) + \
     VAR_MAP_WIPER_VARS + \
     (NUM_KEYPADS * (KEYPAD_MAX_BUTTONS + KEYPAD_MAX_DIALS + KEYPAD_MAX_ANALOG_INPUTS)) \
 )
 
 // Last 2KB sector of flash (sector 31, 0x0800F800)
-// Max program flash size goes to the end of sector 30 (0x0800F000) to leave config space at the end of flash
-// !!! Flash must be smaller thank 63488 bytes !!!
+// App runs from 0x08002000 (after the 8KB bootloader) to the end of sector 30 to leave config space at the end of flash
+// !!! App must be smaller than 55296 bytes !!!
 #define CONFIG_SECTOR       31U
 #define CONFIG_NUM_SECTORS  1U
 #define CONFIG_FLASH_OFFSET (CONFIG_SECTOR * 2048U)

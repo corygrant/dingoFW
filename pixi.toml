@@ -5,6 +5,7 @@
 #   pixi run build-fw                      # default: canboard_v2
 #   pixi run clean                         # clean before switching boards
 #   pixi run build-fw BOARD=dingopdm_v7
+#   pixi run build-bl                      # OpenBLT bootloaders, flash once over SWD/DFU
 #
 # Other boards: dingopdmmax_v1, pt-dpdm4_1.
 # Use `pixi shell` for an interactive shell with the toolchain on PATH.
@@ -31,3 +32,4 @@ m2-coreutils = "*"
 [tasks]
 build-fw = "make -j12"
 clean = "make clean"
+build-bl = "make -C bootloader -j12"

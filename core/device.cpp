@@ -17,6 +17,7 @@
 #include "condition.h"
 #include "timer.h"
 #include "math_block.h"
+#include "lua_script.h"
 #include "mailbox.h"
 #include "msg.h"
 #include "error.h"
@@ -187,6 +188,10 @@ void InitDevice()
     #endif
 
     deviceThread.start(NORMALPRIO);
+
+    #if HAS_LUA
+    InitLua();
+    #endif
 }
 
 void States()
@@ -288,6 +293,10 @@ void CyclicUpdate()
         #if NUM_KEYPADS > 0
         for (uint8_t i = 0; i < NUM_KEYPADS; i++)
             keypad[i].CheckMsg(rxMsg, nBus);
+        #endif
+
+        #if HAS_LUA
+        LuaCanRx(rxMsg, nBus);
         #endif
     }
 
@@ -530,6 +539,11 @@ void InitVarMap()
         pVarMap[index++] = &digIn[i].fDuty;
         pVarMap[index++] = &digIn[i].fFreq;
     }
+
+    #if HAS_LUA
+    for (uint8_t i = 0; i < NUM_LUA_OUTPUTS; i++)
+        pVarMap[index++] = &fLuaOut[i];
+    #endif
 
     //VarMap size must match the expected size
     if (index != VAR_MAP_SIZE)

@@ -15,11 +15,11 @@
 */
 
 /*
- * STM32G474xE memory setup, last 8KB (4 pages) reserved for config.
+ * STM32G474xE memory setup, first 16KB for the OpenBLT bootloader (bootloader/stm32g474), last 8KB (4 pages) reserved for config.
  */
 MEMORY
 {
-    flash0 (rx) : org = 0x08000000, len = 504k
+    flash0 (rx) : org = 0x08004000, len = 488k
     flash_config (r) : org = 0x0807E000, len = 8k
     flash1 (rx) : org = 0x00000000, len = 0
     flash2 (rx) : org = 0x00000000, len = 0

@@ -15,11 +15,11 @@
 */
 
 /*
- * STM32F303x8 memory setup.
+ * STM32F303x8 memory setup, first 8KB for the OpenBLT bootloader (bootloader/stm32f303), last 2KB page for config.
  */
 MEMORY
 {
-    flash0 (rx) : org = 0x08000000, len = 62k
+    flash0 (rx) : org = 0x08002000, len = 54k
     flash_config (r) : org = 0x0800F800, len = 2k
     flash1 (rx) : org = 0x00000000, len = 0
     flash2 (rx) : org = 0x00000000, len = 0

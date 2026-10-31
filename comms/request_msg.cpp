@@ -8,10 +8,23 @@
 #include "device_config.h"
 #include "mailbox.h"
 #include "enums.h"
+#include "lua_script.h"
 
 // External variables from pdm.cpp that we need access to
 extern DeviceConfig stConfig;
 extern bool bSleepRequest;
+
+// The bootloader can't read the config, hand it the CAN settings, layout in bootloader/common/dingo_blt.h
+static void RequestBootloaderCan()
+{
+    volatile uint32_t *pHandoff = (volatile uint32_t *)BL_HANDOFF_ADDR;
+    pHandoff[1] = stConfig.stDevice.nBaseId;
+    pHandoff[2] = static_cast<uint32_t>(stConfig.stDevice.eCanSpeed[0]);
+    pHandoff[0] = 0xB00710AD; // Magic last
+    __DSB();
+
+    NVIC_SystemReset();
+}
 
 void CheckRequestMsgs(CANRxFrame *frame)
 {
@@ -65,16 +78,20 @@ void CheckRequestMsgs(CANRxFrame *frame)
         PostTxFrame(&txMsg);
     }
 
-    #if HAS_USB
     // Check for bootloader request
+    // Byte 6: 1 = OpenBLT over CAN, otherwise USB DFU
     if ((frame->DLC == 8) &&
         (frame->data8[0] == static_cast<uint8_t>(MsgCmd::Bootloader)) && 
         (frame->data8[1] == 'B') && (frame->data8[2] == 'O') && 
         (frame->data8[3] == 'O') && (frame->data8[4] == 'T') && (frame->data8[5] == 'L'))
     {
-        RequestBootloader();
+        if (frame->data8[6] == 1)
+            RequestBootloaderCan();
+        #if HAS_USB
+        else
+            RequestBootloader();
+        #endif
     }
-    #endif
 
     // Check for restart request - applies settings that need a reset (e.g. CAN bitrate)
     // Unburned settings are lost, host should burn first
@@ -121,4 +138,8 @@ void CheckRequestMsgs(CANRxFrame *frame)
 
         PostTxFrame(&txMsg);
     }
+
+    #if HAS_LUA
+    CheckLuaMsgs(frame);
+    #endif
 }

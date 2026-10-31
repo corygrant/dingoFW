@@ -12,6 +12,9 @@
 // F4 has a single EXTI pending register
 #define EXTI_PENDING EXTI->PR
 
+// OpenBLT handoff block, bootloader/common/dingo_blt.h. Top of RAM, survives the reset
+#define BL_HANDOFF_ADDR 0x2001FFF0
+
 void EnterStopMode();
 void RequestBootloader();
 void CheckBootloaderRequest(void);

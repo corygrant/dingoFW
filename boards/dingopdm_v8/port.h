@@ -40,6 +40,9 @@
 #define KEYPAD_MAX_ANALOG_INPUTS 4
 #define KEYPAD_MAX_DIALS 2
 
+#define HAS_LUA FALSE // Needs FRAM for the script
+#define NUM_LUA_OUTPUTS 0
+
 #define HAS_NEOPIXELS TRUE
 #define NUM_INT_NEOPIXELS 5
 #define MAX_NEOPIXELS 16
@@ -72,6 +75,7 @@
     (NUM_COUNTERS * 1) + \
     (NUM_TIMERS * 2) + \
     (NUM_MATH * 1) + \
+    (NUM_LUA_OUTPUTS * 1) + \
     VAR_MAP_WIPER_VARS + \
     (NUM_KEYPADS * (KEYPAD_MAX_BUTTONS + KEYPAD_MAX_DIALS + KEYPAD_MAX_ANALOG_INPUTS)) \
 )
