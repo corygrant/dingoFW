@@ -39,6 +39,7 @@ Checks done: all five apps and the three bootloaders build. Each built app passe
   | 43 LuaErr | `[43, offHi, offLo]` | 5 bytes of the last message or error, 0 past the end |
 
 - **Lua outputs:** 32 new var-map entries at the end of the list, so no existing input references move.
+- **Lua outputs on CAN:** 16 cyclic messages, two outputs each as int32 ×1000 (same format as the math blocks), sent every 100ms. A message only goes out once the script has called `setLuaOut` for one of its two slots. Cyclic message numbers: 37–52 on v7 (base + 39 to base + 54), 35–50 on Max, 36–51 on PT-DPDM4. The DBC builder doesn't cover these yet (it already stops before the math messages).
 - **Runtime:** own thread below every other thread, 40KB heap, 12KB stack. Each call into the script is capped at 200k VM instructions, and a failing script stops until the next upload.
 - **v8:** Lua stays off until the FRAM is fitted. Then it's `HAS_EXT_MEMORY`, `HAS_LUA` and `include core/lua.mk` in `board.mk`. A heap in SRAM2+CCM must keep clear of the top 16 bytes of RAM (bootloader handoff), and FRAM reads use DMA, so read buffers can't be in CCM.
 

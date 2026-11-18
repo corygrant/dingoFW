@@ -16,6 +16,7 @@
 #define LUA_SCRIPT_MAX  (EXT_MEMORY_SIZE - LUA_SCRIPT_ADDR)
 
 extern float fLuaOut[NUM_LUA_OUTPUTS];
+extern volatile uint32_t nLuaOutUsed; // Bit per output the script has set since it loaded
 
 void InitLua();
 void LuaCanRx(const CANRxFrame &frame, uint8_t nBus);

@@ -617,3 +617,34 @@ CANTxMsg TxMsg34()
 
     return stMsg;
 }
+
+// Msgs 35-50 (Lua Out 1-32 Values, x1000), two outputs a message like the math blocks
+static CANTxMsg LuaOutMsg(uint8_t nMsg, uint8_t nOut)
+{
+    CANTxMsg stMsg;
+    CanSetId(stMsg.frame, stConfig.stDevice.nBaseId + CYCLIC_TX_OFFSET + nMsg);
+    stMsg.frame.DLC = 8;
+    stMsg.frame.data32[0] = (int32_t)(GetLuaOutVal(nOut) * 1000.0f);
+    stMsg.frame.data32[1] = (int32_t)(GetLuaOutVal(nOut + 1) * 1000.0f);
+
+    stMsg.bSend = GetLuaOutUsed(nOut) || GetLuaOutUsed(nOut + 1);
+
+    return stMsg;
+}
+
+CANTxMsg TxMsg35() { return LuaOutMsg(35, 0); }
+CANTxMsg TxMsg36() { return LuaOutMsg(36, 2); }
+CANTxMsg TxMsg37() { return LuaOutMsg(37, 4); }
+CANTxMsg TxMsg38() { return LuaOutMsg(38, 6); }
+CANTxMsg TxMsg39() { return LuaOutMsg(39, 8); }
+CANTxMsg TxMsg40() { return LuaOutMsg(40, 10); }
+CANTxMsg TxMsg41() { return LuaOutMsg(41, 12); }
+CANTxMsg TxMsg42() { return LuaOutMsg(42, 14); }
+CANTxMsg TxMsg43() { return LuaOutMsg(43, 16); }
+CANTxMsg TxMsg44() { return LuaOutMsg(44, 18); }
+CANTxMsg TxMsg45() { return LuaOutMsg(45, 20); }
+CANTxMsg TxMsg46() { return LuaOutMsg(46, 22); }
+CANTxMsg TxMsg47() { return LuaOutMsg(47, 24); }
+CANTxMsg TxMsg48() { return LuaOutMsg(48, 26); }
+CANTxMsg TxMsg49() { return LuaOutMsg(49, 28); }
+CANTxMsg TxMsg50() { return LuaOutMsg(50, 30); }

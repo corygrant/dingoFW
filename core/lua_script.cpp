@@ -36,6 +36,8 @@ static_assert(sizeof(DeviceConfig) + sizeof(uint32_t) <= LUA_FRAM_ADDR, "Config 
 #define LUA_RX_QUEUE 16
 
 float fLuaOut[NUM_LUA_OUTPUTS];
+volatile uint32_t nLuaOutUsed;
+static_assert(NUM_LUA_OUTPUTS <= 32, "nLuaOutUsed is a 32-bit mask");
 
 static CH_HEAP_AREA(luaHeapArea, LUA_HEAP_SIZE);
 static memory_heap_t luaHeap;
@@ -169,7 +171,10 @@ static int SetLuaOut(lua_State *L)
     lua_Integer i = luaL_checkinteger(L, 1);
     float f = (float)luaL_checknumber(L, 2);
     if (i >= 0 && i < NUM_LUA_OUTPUTS)
+    {
         fLuaOut[i] = f;
+        nLuaOutUsed = nLuaOutUsed | (1u << i);
+    }
     return 0;
 }
 
@@ -310,6 +315,7 @@ static void Reload()
         chFifoReturnObject(&rxFifo, pRx);
     for (float &fOut : fLuaOut)
         fOut = 0;
+    nLuaOutUsed = 0;
     SetMsg("");
     nTickMs = 10;
 

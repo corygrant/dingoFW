@@ -56,6 +56,9 @@ uint16_t GetTimerElapsed(uint8_t nTimer);
 bool GetMathEnable(uint8_t nMath);
 float GetMathVal(uint8_t nMath);
 
+bool GetLuaOutUsed(uint8_t nOut);
+float GetLuaOutVal(uint8_t nOut);
+
 bool GetKeypadEnable(uint8_t nKeypad);
 uint32_t GetKeypadButtons(uint8_t nKeypad);
 float GetKeypadDialVal(uint8_t nKeypad, uint8_t nDial);

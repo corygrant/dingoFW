@@ -49,6 +49,22 @@ CANTxMsg TxMsg33();
 CANTxMsg TxMsg34();
 CANTxMsg TxMsg35();
 CANTxMsg TxMsg36();
+CANTxMsg TxMsg37();
+CANTxMsg TxMsg38();
+CANTxMsg TxMsg39();
+CANTxMsg TxMsg40();
+CANTxMsg TxMsg41();
+CANTxMsg TxMsg42();
+CANTxMsg TxMsg43();
+CANTxMsg TxMsg44();
+CANTxMsg TxMsg45();
+CANTxMsg TxMsg46();
+CANTxMsg TxMsg47();
+CANTxMsg TxMsg48();
+CANTxMsg TxMsg49();
+CANTxMsg TxMsg50();
+CANTxMsg TxMsg51();
+CANTxMsg TxMsg52();
 
 [[maybe_unused]] static CANTxMsg (*TxMsgs[NUM_TX_MSGS])() = {
     TxMsg0,
@@ -87,5 +103,21 @@ CANTxMsg TxMsg36();
     TxMsg33,
     TxMsg34,
     TxMsg35,
-    TxMsg36};
+    TxMsg36,
+    TxMsg37,
+    TxMsg38,
+    TxMsg39,
+    TxMsg40,
+    TxMsg41,
+    TxMsg42,
+    TxMsg43,
+    TxMsg44,
+    TxMsg45,
+    TxMsg46,
+    TxMsg47,
+    TxMsg48,
+    TxMsg49,
+    TxMsg50,
+    TxMsg51,
+    TxMsg52};
 

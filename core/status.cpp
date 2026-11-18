@@ -9,6 +9,7 @@
 #include "condition.h"
 #include "timer.h"
 #include "math_block.h"
+#include "lua_script.h"
 #if NUM_OUTPUTS > 0
 #include "profet.h"
 #endif
@@ -414,6 +415,27 @@ float GetMathVal(uint8_t nMath)
         return VolatileRead(mathBlock[nMath].fVal);
     #endif
     (void)nMath;
+    return 0;
+}
+
+// Set by the script since it loaded, unused slots stay off the bus
+bool GetLuaOutUsed(uint8_t nOut)
+{
+    #if HAS_LUA
+    if (nOut < NUM_LUA_OUTPUTS)
+        return (nLuaOutUsed >> nOut) & 1;
+    #endif
+    (void)nOut;
+    return false;
+}
+
+float GetLuaOutVal(uint8_t nOut)
+{
+    #if HAS_LUA
+    if (nOut < NUM_LUA_OUTPUTS)
+        return VolatileRead(fLuaOut[nOut]);
+    #endif
+    (void)nOut;
     return 0;
 }
 
