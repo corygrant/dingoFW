@@ -105,6 +105,13 @@ jobs:
           cp build/dingopdm_v8.bin firmware_artifacts/dingopdm_v8_FW_v${VERSION_DASHED}.bin
           cp build/dingopdm_v8.elf firmware_artifacts/dingopdm_v8_FW_v${VERSION_DASHED}.elf
 
+          # Build sixth variant, in build directory
+          make clean
+          make BOARD=linboard_v1
+          cp build/linboard_v1.hex firmware_artifacts/linboard_v1_FW_v${VERSION_DASHED}.hex
+          cp build/linboard_v1.bin firmware_artifacts/linboard_v1_FW_v${VERSION_DASHED}.bin
+          cp build/linboard_v1.elf firmware_artifacts/linboard_v1_FW_v${VERSION_DASHED}.elf
+
           # Copy back to build for the release action
           cp firmware_artifacts/* build/
 
@@ -150,6 +157,11 @@ jobs:
             - [BIN](https://github.com/${{ github.repository }}/releases/download/testing-latest/dingopdm_v8_FW_v${{ steps.extract_version.outputs.version_dashed }}.bin)
             - [ELF](https://github.com/${{ github.repository }}/releases/download/testing-latest/dingopdm_v8_FW_v${{ steps.extract_version.outputs.version_dashed }}.elf)
 
+            **linboard_v1:**
+            - [HEX](https://github.com/${{ github.repository }}/releases/download/testing-latest/linboard_v1_FW_v${{ steps.extract_version.outputs.version_dashed }}.hex)
+            - [BIN](https://github.com/${{ github.repository }}/releases/download/testing-latest/linboard_v1_FW_v${{ steps.extract_version.outputs.version_dashed }}.bin)
+            - [ELF](https://github.com/${{ github.repository }}/releases/download/testing-latest/linboard_v1_FW_v${{ steps.extract_version.outputs.version_dashed }}.elf)
+
           files: |
             build/dingopdm_v7_FW_v${{ steps.extract_version.outputs.version_dashed }}.hex
             build/dingopdm_v7_FW_v${{ steps.extract_version.outputs.version_dashed }}.bin
@@ -166,5 +178,8 @@ jobs:
             build/dingopdm_v8_FW_v${{ steps.extract_version.outputs.version_dashed }}.hex
             build/dingopdm_v8_FW_v${{ steps.extract_version.outputs.version_dashed }}.bin
             build/dingopdm_v8_FW_v${{ steps.extract_version.outputs.version_dashed }}.elf
+            build/linboard_v1_FW_v${{ steps.extract_version.outputs.version_dashed }}.hex
+            build/linboard_v1_FW_v${{ steps.extract_version.outputs.version_dashed }}.bin
+            build/linboard_v1_FW_v${{ steps.extract_version.outputs.version_dashed }}.elf
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

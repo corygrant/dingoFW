@@ -90,6 +90,24 @@
             "v1": false,
             "runToEntryPoint": "main",
 
+        },
+        {
+            "cwd": "${workspaceFolder}",
+            "executable": "${workspaceFolder}/build/linboard_v1.elf",
+            // Bootloader too, the app only starts behind it (pixi run build-bl)
+            "loadFiles": ["${workspaceFolder}/bootloader/stm32f302/build/openblt_stm32f302.elf", "${workspaceFolder}/build/linboard_v1.elf"],
+            "name": "Debug LINBoard v1",
+            "request": "launch",
+            "type": "cortex-debug",
+            "servertype": "openocd",
+            "configFiles": ["interface/stlink.cfg", 
+						    "target/stm32f3x.cfg"],
+            "showDevDebugOutput": "raw",
+            "svdFile": "${workspaceFolder}/boards/stm32f302/STM32F302.svd",
+            "rtos": "auto",
+            "v1": false,
+            "runToEntryPoint": "main",
+
         }
     ]
 }

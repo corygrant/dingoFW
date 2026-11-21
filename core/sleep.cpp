@@ -8,17 +8,18 @@
 #include "device_config.h"
 
 #if CAN_SLEEP
-// Static variables that were in pdm.cpp
+
 static uint8_t nNumOutputsOn;
 static uint8_t nLastNumOutputsOn;
 static uint32_t nAllOutputsOffTime;
 static bool bLastUsbConnected;
 static uint32_t nUsbDisconnectedTime;
 
-// External variables from pdm.cpp that we need access to
 extern DeviceConfig stConfig;
 bool bSleepRequest;
+#if NUM_OUTPUTS > 0
 extern Profet pf[NUM_OUTPUTS];
+#endif
 
 bool CheckEnterSleep()
 {
@@ -113,12 +114,15 @@ void EnterSleep()
     // Let the transceiver settle in standby before any wake source is armed
     chThdSleepMilliseconds(20);
 
+    #if NUM_DIG_INPUTS > 0
     // A PWM input's edge event would wake it, and the wake event below needs the same EXTI line
     for(uint8_t i = 0; i < NUM_DIG_INPUTS; i++)
         digIn[i].StopPwm();
+    #endif
 
     // Set wakeup sources
 
+    #if NUM_DIG_INPUTS > 0
     // Digital inputs change detection, with configured pullup or pulldown
     // Can be disabled in config
     if(!stConfig.stDevice.bDisableDigInWake)
@@ -128,6 +132,7 @@ void EnterSleep()
             EnableLineEventWithPull(digIn[i].GetLine(), stConfig.stDigInput[i].ePull);
         }
     }
+    #endif
 
     // CAN receive detection - can be disabled in config
     if(!stConfig.stDevice.bDisableCanWake)
