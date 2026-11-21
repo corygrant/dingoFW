@@ -15,6 +15,7 @@
 // OpenBLT handoff block, bootloader/common/dingo_blt.h. Top of RAM, survives the reset
 #define BL_HANDOFF_ADDR 0x2001FFF0
 
+void ClearExtiPending();
 void EnterStopMode();
 void RequestBootloader();
 void CheckBootloaderRequest(void);

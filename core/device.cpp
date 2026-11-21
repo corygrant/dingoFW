@@ -157,9 +157,11 @@ void InitDevice()
 
     InitParamThread();
 
+    #if HAS_ADC
     if (InitAdc() != HAL_RET_SUCCESS)
         Error::SetFatalError(FatalErrorType::ErrADC, MsgSrc::Init);
-        
+    #endif
+
     if (InitCan(&stConfig.stDevice) != HAL_RET_SUCCESS) // Starts CAN threads
         Error::SetFatalError(FatalErrorType::ErrCAN, MsgSrc::Init);
 
@@ -534,11 +536,13 @@ void InitVarMap()
         pVarMap[index++] = &mathBlock[i].fVal;
     #endif
 
+    #if NUM_DIG_INPUTS > 0
     for (uint8_t i = 0; i < NUM_DIG_INPUTS; i++)
     {
         pVarMap[index++] = &digIn[i].fDuty;
         pVarMap[index++] = &digIn[i].fFreq;
     }
+    #endif
 
     #if HAS_LUA
     for (uint8_t i = 0; i < NUM_LUA_OUTPUTS; i++)

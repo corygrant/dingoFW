@@ -53,6 +53,13 @@
 #define STM32F302xC
 
 /*
+ * USB bus control. F3 USB has no internal D+ pull-up (no BCDR), the board has a
+ * fixed 1.5k pull-up on D+, so there's nothing to switch.
+ */
+#define usb_lld_connect_bus(usbp)
+#define usb_lld_disconnect_bus(usbp)
+
+/*
  * IO pins assignments.
  */
 #define GPIOA_PIN0                  0U
@@ -205,9 +212,9 @@
 #define LINE_SWDIO                  PAL_LINE(GPIOA, 13U)
 #define LINE_SWCLK                  PAL_LINE(GPIOA, 14U)
 #define LINE_I2C1_SCL               PAL_LINE(GPIOA, 15U)
-#define LINE_CAN_LED                PAL_LINE(GPIOB, 0U)
-#define LINE_LIN_LED                PAL_LINE(GPIOB, 1U)
-#define LINE_STATUS_LED             PAL_LINE(GPIOB, 2U)
+#define LINE_LED_CAN                PAL_LINE(GPIOB, 0U)
+#define LINE_LED_LIN                PAL_LINE(GPIOB, 1U)
+#define LINE_LED_STATUS             PAL_LINE(GPIOB, 2U)
 #define LINE_SWO                    PAL_LINE(GPIOB, 3U)
 #define LINE_I2C1_SDA               PAL_LINE(GPIOB, 7U)
 #define LINE_CAN_RX                 PAL_LINE(GPIOB, 8U)
@@ -215,6 +222,8 @@
 #define LINE_UART3_TX               PAL_LINE(GPIOB, 10U)
 #define LINE_UART3_RX               PAL_LINE(GPIOB, 11U)
 #define LINE_CAN_STANDBY            PAL_LINE(GPIOC, 13U)
+#define LINE_USB_VBUS               PAL_LINE(GPIOA, 10U) //Not connected   
+#define LINE_LED_ERROR              PAL_LINE(GPIOB, 4U) //Not connected
 
 /*===========================================================================*/
 /* Driver pre-compile time settings.                                         */

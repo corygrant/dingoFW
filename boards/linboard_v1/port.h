@@ -8,13 +8,14 @@
 #define PROCESS_STACK 0x1000
 
 #define HAS_SE_LEDS TRUE
+#define HAS_ADC FALSE
 #define HAS_USB TRUE
 #define HAS_I2C1 TRUE
 #define HAS_I2C2 FALSE
 #define HAS_EXT_TEMP_SENSOR FALSE
 #define HAS_EXT_MEMORY TRUE
 #define EXT_MEMORY_I2C I2CD1
-#define HAS_BATT_VOLT_SENSE TRUE
+#define HAS_BATT_VOLT_SENSE FALSE
 #define CAN_SLEEP TRUE
 #define HAS_LIN TRUE
 #define LIN_UART UARTD2
@@ -47,6 +48,8 @@
 #define NUM_LUA_OUTPUTS 32
 #define LUA_HEAP_SIZE (40 * 1024)
 #define EXT_MEMORY_SIZE 0x8000 // MB85RC256V
+
+#define HAS_NEOPIXELS FALSE
 
 //Always false
 //Always true

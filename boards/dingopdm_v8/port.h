@@ -8,6 +8,7 @@
 #define PROCESS_STACK 0x1000
 
 #define HAS_SE_LEDS TRUE
+#define HAS_ADC TRUE
 #define HAS_USB TRUE
 #define HAS_I2C1 TRUE
 #define HAS_I2C2 TRUE

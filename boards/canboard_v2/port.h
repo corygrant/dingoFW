@@ -13,6 +13,7 @@
 #define CCM_BSS __attribute__((section(".ram4_clear")))
 
 #define HAS_SE_LEDS FALSE
+#define HAS_ADC TRUE
 #define HAS_USB FALSE
 #define HAS_I2C1 FALSE
 #define HAS_I2C2 FALSE
