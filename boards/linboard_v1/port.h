@@ -19,6 +19,8 @@
 #define CAN_SLEEP TRUE
 #define HAS_LIN TRUE
 #define LIN_UART UARTD2
+#define NUM_LIN_BUSES 1
+#define NUM_CAN_BUSES 1
 
 #define NUM_OUTPUTS 0
 #define NUM_DIG_OUTPUTS 0
@@ -27,7 +29,8 @@
 #define NUM_VIRT_INPUTS 16
 #define NUM_CAN_INPUTS 32
 #define NUM_CAN_OUTPUTS 32
-#define NUM_CAN_BUSES 1
+#define NUM_LIN_INPUTS 32
+#define NUM_LIN_OUTPUTS 32
 #define NUM_FLASHERS 4
 #define NUM_WIPER_INTER_DELAYS 0
 #define NUM_WIPER_SPEED_MAP 0
@@ -112,6 +115,20 @@ const I2CConfig i2cConfig = {
                         STM32_TIMINGR_SCLL(21U),
     .cr1              = 0,
     .cr2              = 0
+};
+
+const UARTConfig lin_config = {
+    .txend1_cb = NULL,
+    .txend2_cb = NULL,
+    .rxend_cb = NULL,
+    .rxchar_cb = NULL,
+    .rxerr_cb = NULL,
+    .timeout_cb = NULL,
+    .timeout = 100,
+    .speed = 19200,
+    .cr1 = 0,
+    .cr2 = USART_CR2_LINEN | USART_CR2_RTOEN,
+    .cr3 = 0
 };
 
 //msg_t InitAdc();

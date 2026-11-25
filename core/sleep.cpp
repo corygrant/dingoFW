@@ -25,6 +25,7 @@ bool CheckEnterSleep()
 {
     bool bEnterSleep = false;
 
+#if NUM_OUTPUTS > 0
     // Count number of outputs on
     nNumOutputsOn = 0;
     for (int i = 0; i < NUM_OUTPUTS; i++)
@@ -39,12 +40,15 @@ bool CheckEnterSleep()
         nAllOutputsOffTime = SYS_TIME;
     }
     nLastNumOutputsOn = nNumOutputsOn;
+#endif
 
+#if HAS_USB
     //USB disconnected, save time - wait SLEEP_TIMEOUT before sleep
     if (!GetUsbConnected() && bLastUsbConnected)
         nUsbDisconnectedTime = SYS_TIME;
 
     bLastUsbConnected = GetUsbConnected();
+#endif
 
     // CAN Rx thread can stamp a time slightly after SYS_TIME was read here,
     // so treat a negative (signed) difference as 0. Wrap-safe.
@@ -141,12 +145,14 @@ void EnterSleep()
         palEnableLineEvent(LINE_CAN_RX, PAL_EVENT_MODE_BOTH_EDGES | PAL_STM32_PUPDR_FLOATING);
     }
 
+    #if HAS_USB
     // USB detection - always active
     palSetLineMode(LINE_USB_DP, PAL_MODE_INPUT);
     palEnableLineEvent(LINE_USB_DP, PAL_EVENT_MODE_BOTH_EDGES | PAL_STM32_PUPDR_FLOATING);
     palSetLineMode(LINE_USB_DM, PAL_MODE_INPUT);
     palEnableLineEvent(LINE_USB_DM, PAL_EVENT_MODE_BOTH_EDGES | PAL_STM32_PUPDR_FLOATING);
-
+    #endif
+    
     // Arming a line can latch an edge from the pin changing mode. Clear those so
     // only a real wake source ends the stop. One arriving from here on is still
     // pending at the WFI and wakes the MCU as it should.

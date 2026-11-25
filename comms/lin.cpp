@@ -2,45 +2,14 @@
 #include "port.h"
 #include <cstring>
 
-#define RX_TIMEOUT_MS 500
-
-uint8_t nCounter = 0;
-uint8_t nData1 = 0;
-uint8_t nData2 = 0;
-bool bMoving = false;
-uint8_t nWiperPos = 0;
-
-bool bSlowSpeed = true;
-bool bFastSpeed = false;
-bool bIntMode = false;
-bool bSwipeMode = false;
-uint8_t nIntModeSpeed = 0;
-
-uint32_t nLastRxTime = 0;
-
-static UARTConfig lin_config = {
-    .txend1_cb = NULL,
-    .txend2_cb = NULL,
-    .rxend_cb = NULL,
-    .rxchar_cb = NULL,
-    .rxerr_cb = NULL,
-    .timeout_cb = NULL,
-    .timeout = 100,
-    .speed = 19200,
-    .cr1 = 0,
-    .cr2 = USART_CR2_LINEN | USART_CR2_RTOEN,
-    .cr3 = 0
-};
-
 static void LinSendBreak(void)
 {
-    UARTD2.usart->RQR |= USART_RQR_SBKRQ;
+    LIN_UART.usart->RQR |= USART_RQR_SBKRQ; // Send break request
     
     // Wait for break completion
-    while(UARTD2.usart->ISR & USART_ISR_SBKF) {
+    while(LIN_UART.usart->ISR & USART_ISR_SBKF) {
         chThdSleepMicroseconds(10);
     }
-
 }
 
 // Calculate protected ID with parity bits
@@ -51,6 +20,7 @@ static uint8_t LinCalculateProtectedId(uint8_t id) {
     return id | ((p0 & 1) << 6) | ((p1 & 1) << 7);
 }
 
+/*
 uint8_t calculateLIN2xChecksum(uint8_t protected_id, uint8_t *data, size_t length) {
     uint16_t sum = protected_id;
     
@@ -65,6 +35,7 @@ uint8_t calculateLIN2xChecksum(uint8_t protected_id, uint8_t *data, size_t lengt
     
     return ~sum & 0xFF;
 }
+*/
 
 uint8_t calculateLIN1xChecksum(uint8_t *data, size_t length) {
     uint16_t sum = 0;  // Start with 0, don't include protected_id
@@ -92,7 +63,7 @@ msg_t LinSendFrame(stLinFrame *frame, bool bChecksum) {
     // 2. Send sync byte
     uint8_t sync = 0x55;
     size = 1;
-    if(uartSendFullTimeout(&UARTD2, &size, &sync, timeout) != MSG_OK) {
+    if(uartSendFullTimeout(&LIN_UART, &size, &sync, timeout) != MSG_OK) {
         return MSG_TIMEOUT;
     }
 
@@ -114,7 +85,7 @@ msg_t LinSendFrame(stLinFrame *frame, bool bChecksum) {
         size = 1 + frame->nLength; // Sync + ID + Data
     }
 
-    if(uartSendFullTimeout(&UARTD2, &size, &txData, timeout) != MSG_OK) {
+    if(uartSendFullTimeout(&LIN_UART, &size, &txData, timeout) != MSG_OK) {
         return MSG_TIMEOUT;
     }
 
@@ -146,7 +117,7 @@ msg_t LinGetResponse(uint8_t id, stLinFrame *rxFrame) {
     
     // Receive response (data + checksum)
     size_t response_length = 6; // Data + Checksum
-    if (uartReceiveTimeout(&UARTD2, &response_length, rxData, chTimeMS2I(50)) != MSG_OK) {
+    if (uartReceiveTimeout(&LIN_UART, &response_length, rxData, chTimeMS2I(50)) != MSG_OK) {
         return MSG_TIMEOUT;
     }
     
@@ -224,14 +195,14 @@ bool LinRxIsActive(void)
 
 // Put LIN transceiver to sleep
 void LinSleep(void) {
-    uartStop(&UARTD2);
+    uartStop(&LIN_UART);
     palClearLine(LINE_LIN_STANDBY); // Put TJA1029T to sleep
 }
 
 // Wake up LIN transceiver
 void LinWakeup(void) {
     palSetLine(LINE_LIN_STANDBY);    // Wake up TJA1029T
-    uartStart(&UARTD2, &lin_config); // Start UART driver
+    uartStart(&LIN_UART, &lin_config); // Start UART driver
 }
 
 void InitLin(void) {

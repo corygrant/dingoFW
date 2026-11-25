@@ -90,6 +90,8 @@ void CanOutputs::Update()
 {
     for (int i = 0; i < CAN_OUT_FRAMES; ++i)
     {
+        if (nAssignedOut[i] == -1) continue;
+        
         if (canOut[i].stFrame.DLC == 0) continue; // Skip unused frames
 
         if(canOut[i].CheckTxTime())

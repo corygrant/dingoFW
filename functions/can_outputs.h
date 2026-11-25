@@ -36,7 +36,6 @@ private:
     // Frame indexes are independent of CAN output indexes, multiple outputs may be packed into the same frame based on ID
     static int8_t nAssignedOut[NUM_CAN_OUTPUTS]; // Maps CAN output index to frame index, -1 if not assigned
 
-    static void CheckTime(uint8_t index);
     static void ClearFrames();
     static uint8_t CalcDlc(uint8_t nStartBit, uint8_t nBitLength);
 };
