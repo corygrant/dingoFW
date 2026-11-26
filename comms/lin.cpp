@@ -1,4 +1,5 @@
 #include "lin.h"
+#include "lin_proto.h"
 #include "port.h"
 #include <cstring>
 
@@ -10,46 +11,6 @@ static void LinSendBreak(void)
     while(LIN_UART.usart->ISR & USART_ISR_SBKF) {
         chThdSleepMicroseconds(10);
     }
-}
-
-// Calculate protected ID with parity bits
-static uint8_t LinCalculateProtectedId(uint8_t id) {
-    uint8_t p0 = (id >> 0) ^ (id >> 1) ^ (id >> 2) ^ (id >> 4);
-    uint8_t p1 = ~((id >> 1) ^ (id >> 3) ^ (id >> 4) ^ (id >> 5));
-    
-    return id | ((p0 & 1) << 6) | ((p1 & 1) << 7);
-}
-
-/*
-uint8_t calculateLIN2xChecksum(uint8_t protected_id, uint8_t *data, size_t length) {
-    uint16_t sum = protected_id;
-    
-    for(uint8_t i = 0; i < length; i++) {
-        sum += data[i];
-    }
-    
-    // RFC 1071 style checksum (Internet checksum)
-    while(sum >> 8) {
-        sum = (sum & 0xFF) + (sum >> 8);
-    }
-    
-    return ~sum & 0xFF;
-}
-*/
-
-uint8_t calculateLIN1xChecksum(uint8_t *data, size_t length) {
-    uint16_t sum = 0;  // Start with 0, don't include protected_id
-    
-    for(uint8_t i = 0; i < length; i++) {
-        sum += data[i];
-    }
-    
-    // RFC 1071 style checksum (Internet checksum)
-    while(sum >> 8) {
-        sum = (sum & 0xFF) + (sum >> 8);
-    }
-    
-    return ~sum & 0xFF;
 }
 
 // Send complete LIN frame (master)
@@ -68,7 +29,7 @@ msg_t LinSendFrame(stLinFrame *frame, bool bChecksum) {
     }
 
     uint8_t txData[10];
-    txData[0] = LinCalculateProtectedId(frame->nId);
+    txData[0] = LinPid(frame->nId);
     txData[1] = frame->nData[0]; // First data byte
     txData[2] = frame->nData[1]; // Second data byte
     txData[3] = frame->nData[2]; // Third data byte
@@ -78,7 +39,7 @@ msg_t LinSendFrame(stLinFrame *frame, bool bChecksum) {
     txData[7] = frame->nData[6]; // Seventh data byte
     txData[8] = frame->nData[7]; // Eighth data byte
     if(bChecksum) {
-        frame->nChecksum = calculateLIN1xChecksum(frame->nData, frame->nLength);
+        frame->nChecksum = LinCalcChecksum(txData[0], frame->nData, frame->nLength, LinChecksum::Classic);
         txData[1 + frame->nLength] = frame->nChecksum;
         size = 2 + frame->nLength; // Sync + ID + Data + Checksum
     } else {
@@ -123,7 +84,7 @@ msg_t LinGetResponse(uint8_t id, stLinFrame *rxFrame) {
     
     // Copy data and verify checksum
     memcpy(rxFrame->nData, rxData, rxFrame->nLength);
-    uint8_t expected_checksum = calculateLIN1xChecksum(rxFrame->nData, rxFrame->nLength);
+    uint8_t expected_checksum = LinCalcChecksum(LinPid(id), rxFrame->nData, rxFrame->nLength, LinChecksum::Classic);
 
     if (expected_checksum != rxData[rxFrame->nLength]) {
         return MSG_RESET; // Checksum error

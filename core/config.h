@@ -32,6 +32,11 @@
 #endif
 #if NUM_ANALOG_INPUTS > 0
 #include "analog_input.h"
+#endif
+#if NUM_LIN_FRAMES > 0
+#include "lin_frame.h"
+#include "lin_input.h"
+#include "lin_output.h"
 #endif  
 
 #define CONFIG_VERSION 0x000A //Increment when config structure changes
@@ -86,6 +91,11 @@ struct DeviceConfig{
   #endif
   #if NUM_ANALOG_INPUTS > 0
   Config_AnalogInput stAnalogInput[NUM_ANALOG_INPUTS];
+  #endif
+  #if NUM_LIN_FRAMES > 0
+  Config_LinFrame stLinFrame[NUM_LIN_FRAMES];
+  Config_LinInput stLinInput[NUM_LIN_INPUTS];
+  Config_LinOutput stLinOutput[NUM_LIN_OUTPUTS];
   #endif
 };
 

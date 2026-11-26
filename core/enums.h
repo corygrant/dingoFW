@@ -141,6 +141,21 @@ enum class ByteOrder : uint8_t
 };
 
 //=============================================================================
+// LIN
+//=============================================================================
+enum class LinDirection : uint8_t
+{
+    Publish = 0,  // Device (master) sends data (header + data)
+    Subscribe = 1 // Slave supplies the response (header only)
+};
+
+enum class LinChecksum : uint8_t
+{
+    Classic = 0, // LIN 1.x: data only
+    Enhanced = 1 // LIN 2.x: PID + data
+};
+
+//=============================================================================
 // Input
 //=============================================================================
 enum class InputMode : uint8_t
